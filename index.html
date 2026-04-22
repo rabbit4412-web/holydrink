@@ -568,9 +568,8 @@ function renderWeek(){
   if(!el) return;
   el.innerHTML=DAY_KEYS.map((k,i)=>{
     const rid=schedule[k];
-    const name=rid&&allShops[rid]?allShops[rid].name:'未設定';
     const hasOrders=rid&&orders[k]&&orders[k][rid]&&Object.keys(orders[k][rid]).length>0;
-    return `<div class="wday${i===curDayIdx?' active':''}${hasOrders?' has':''}" onclick="switchDay(${i})">${name.substring(0,4)||'週'+DAYS[i]}</div>`;
+    return `<div class="wday${i===curDayIdx?' active':''}${hasOrders?' has':''}" onclick="switchDay(${i})">週${DAYS[i]}</div>`;
   }).join('');
 }
 
