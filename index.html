@@ -34,12 +34,17 @@ button,input,select{font-family:inherit;}
 .admin-badge{background:rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid rgba(255,255,255,.4);}
 .hdr-amt{font-size:20px;font-weight:700;color:#fff;}
 .hdr-sub{font-size:11px;color:rgba(255,255,255,.7);text-align:right;}
+.week-row{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px;}
+.week-row::-webkit-scrollbar{display:none;}
+.wday{flex:none;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;color:rgba(255,255,255,.65);cursor:pointer;border:1px solid transparent;white-space:nowrap;}
+.wday.active{background:rgba(255,255,255,.25);color:#fff;border-color:rgba(255,255,255,.4);}
+.wday.has::after{content:'●';font-size:7px;margin-left:3px;vertical-align:middle;color:#9FE1CB;}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;flex:none;}
 .sync-dot.syncing{background:#fbbf24;animation:pulse .8s infinite;}
 .sync-dot.off{background:#f87171;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
 
-.tabs{display:flex;background:var(--sf);border-bottom:1px solid var(--bd);position:sticky;top:92px;z-index:50;}
+.tabs{display:flex;background:var(--sf);border-bottom:1px solid var(--bd);position:sticky;top:106px;z-index:50;}
 .tab{flex:1;padding:11px 4px;font-size:12px;font-weight:500;color:var(--sub);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;}
 .tab.active{color:var(--green);border-bottom-color:var(--green);}
 .panel{display:none;}.panel.active{display:block;}
@@ -207,6 +212,7 @@ button,input,select{font-family:inherit;}
       <div class="hdr-sub" id="hdrSub">今日合計</div>
     </div>
   </div>
+  <div class="week-row" id="weekRow"></div>
 </div>
 
 <div class="tabs">
@@ -543,12 +549,12 @@ function findItemById(items,id){
 
 // ── Render All ──
 function renderAll(){
+  renderWeek();
   renderShopInfo();
   renderDepts();
   renderCatBar();
   renderDrinks();
   updateHdr();
-  renderWeek();
 }
 
 function updateHdr(){
@@ -558,7 +564,21 @@ function updateHdr(){
 }
 
 function renderWeek(){
-  // update has-dot on tabs (not applicable here, but updateHdr suffices)
+  const el=document.getElementById('weekRow');
+  if(!el) return;
+  el.innerHTML=DAY_KEYS.map((k,i)=>{
+    const rid=schedule[k];
+    const name=rid&&allShops[rid]?allShops[rid].name:'未設定';
+    const hasOrders=rid&&orders[k]&&orders[k][rid]&&Object.keys(orders[k][rid]).length>0;
+    return `<div class="wday${i===curDayIdx?' active':''}${hasOrders?' has':''}" onclick="switchDay(${i})">${name.substring(0,4)||'週'+DAYS[i]}</div>`;
+  }).join('');
+}
+
+function switchDay(i){
+  curDayIdx=i;
+  curMember=null;
+  curCat='全部';
+  renderAll();
 }
 
 function renderShopInfo(){
