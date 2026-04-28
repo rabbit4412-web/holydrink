@@ -412,14 +412,20 @@ function mutOrder(dept,member,fn){
 // Key format: "id__size__ice__sugar__addon"
 function buildKey(id,size,ice,sugar,addon){return [String(id),size||'',ice||'',sugar||'',addon||''].join('__');}
 function parseKey(k){const p=k.split('__');return{id:p[0],size:p[1]||'',ice:p[2]||'',sugar:p[3]||'',addon:p[4]||''};}
-function getPrice(item,size){return(size==='L'&&item.priceL)?item.priceL:item.price;}
+function getPrice(item,size,addon){
+  let p=(size==='L'&&item.priceL)?item.priceL:item.price;
+  if(addon) p+=addonPrice(addon);
+  return p;
+}
+function addonName(a){return a.includes(':')?a.split(':')[0]:a;}
+function addonPrice(a){return a.includes(':')?parseInt(a.split(':')[1])||10:10;}
 function buildLabel(item,size,ice,sugar,addon){
   let lbl=item.name;
   if(size&&item.priceL) lbl+=' ('+size+')';
   if(ice) lbl+=' | '+ice;
   if(item.fixedSugar) lbl+=' | 甜度固定';
   else if(sugar) lbl+=' | '+sugar;
-  if(addon) lbl+=' | +'+addon;
+  if(addon) lbl+=' | +'+addonName(addon);
   return lbl;
 }
 function findItem(items,id){return(items||[]).find(i=>String(i.id)===String(id));}
@@ -429,7 +435,7 @@ function mTotal(dept,member){
   const o=getOrder(dept,member);
   return Object.keys(o.items||{}).reduce((s,k)=>{
     const {id,size}=parseKey(k);const it=findItem(r.items,id);
-    return s+(it?getPrice(it,size)*(o.items[k]||0):0);
+    return s+(it?getPrice(it,size,addon)*(o.items[k]||0):0);
   },0);
 }
 function isLocked(d,m){return !!(lockedOrders[dk()]&&lockedOrders[dk()][d+'__'+m]);}
@@ -555,7 +561,7 @@ function renderDrinks(){
       <div class="dname">${item.name}</div>
       ${priceHtml}
       ${item.fixedSugar?'<div class="dfixed">甜度固定</div>':''}
-      ${item.addon&&item.addon.length?`<div style="font-size:10px;color:var(--sub);margin-top:2px;">加料：${item.addon.join('/')}</div>`:''}
+      ${item.addon&&item.addon.length?`<div style="font-size:10px;color:var(--sub);margin-top:3px;">➕ 加料：${item.addon.map(a=>addonName(a)+(a.includes(':')?'+'+addonPrice(a)+'元':'+10元')).join(' / ')}</div>`:''}
       ${orderRows}
     </div>`;
   }).join('');
@@ -601,8 +607,13 @@ function renderModal(){
   html+=`</div>`;
   // Addon
   if(item.addon&&item.addon.length){
-    html+=`<div class="opt-section"><div class="opt-label">➕ 加料（+10元）</div><div class="opt-row">
-      ${item.addon.map(a=>`<button class="opt-btn${_pAddon===a?' active':''}" onclick="setPA('${a}')">${a}</button>`).join('')}
+    // addon format: "名稱:價格" or just "名稱" (default +10)
+    const addonBtns=item.addon.map(a=>{
+      const [aName,aPrice]=a.includes(':')?a.split(':'):[a,'10'];
+      return `<button class="opt-btn${_pAddon===a?' active':''}" onclick="setPA('${a}')">${aName} <span style="font-size:10px;opacity:.8;">+${aPrice}元</span></button>`;
+    }).join('');
+    html+=`<div class="opt-section"><div class="opt-label">➕ 加料</div><div class="opt-row">
+      ${addonBtns}
       <button class="opt-btn${_pAddon===''?' active':''}" onclick="setPA('')">不加料</button>
     </div></div>`;
   }
@@ -645,7 +656,7 @@ function renderSummary(){
       let mt=0,mi=[];const o=getOrder(dept.name,m);
       Object.keys(o.items||{}).forEach(k=>{
         const{id,size,ice,sugar,addon}=parseKey(k);const it=findItem(r?.items,id);
-        if(it){const s=getPrice(it,size)*(o.items[k]||0);mt+=s;dt+=s;gT+=s;gC+=(o.items[k]||0);mi.push(buildLabel(it,size,ice,sugar,addon)+' ×'+(o.items[k]||0));}
+        if(it){const s=getPrice(it,size,addon)*(o.items[k]||0);mt+=s;dt+=s;gT+=s;gC+=(o.items[k]||0);mi.push(buildLabel(it,size,ice,sugar,addon)+' ×'+(o.items[k]||0));}
       });
       if(mi.length)pr+=`<div class="sum-person"><span class="sum-pname">${m}</span><span class="sum-pitems">${mi.join('　')}</span><span class="sum-pamt">NT$${mt}</span></div>`;
     });
@@ -657,7 +668,7 @@ function renderSummary(){
     const o=getOrder(d.name,m);
     Object.keys(o.items||{}).forEach(k=>{
       const{id,size,ice,sugar,addon}=parseKey(k);const it=findItem(r?.items,id);
-      if(it){const lbl=buildLabel(it,size,ice,sugar,addon);if(!all[lbl])all[lbl]={price:getPrice(it,size),qty:0};all[lbl].qty+=(o.items[k]||0);}
+      if(it){const lbl=buildLabel(it,size,ice,sugar,addon);if(!all[lbl])all[lbl]={price:getPrice(it,size,addon),qty:0};all[lbl].qty+=(o.items[k]||0);}
     });
   }));
   const entries=Object.entries(all).sort((a,b)=>a[0].localeCompare(b[0],'zh-Hant'));
@@ -676,7 +687,7 @@ function copyOrder(){
       let mi=[],mt=0;const o=getOrder(dept.name,m);
       Object.keys(o.items||{}).forEach(k=>{
         const{id,size,ice,sugar,addon}=parseKey(k);const it=findItem(r?.items,id);
-        if(it){mt+=getPrice(it,size)*(o.items[k]||0);cnt+=(o.items[k]||0);mi.push(buildLabel(it,size,ice,sugar,addon)+' ×'+(o.items[k]||0));}
+        if(it){mt+=getPrice(it,size,addon)*(o.items[k]||0);cnt+=(o.items[k]||0);mi.push(buildLabel(it,size,ice,sugar,addon)+' ×'+(o.items[k]||0));}
       });
       if(mi.length){total+=mt;dl.push(`  ${m}：${mi.join('、')}（NT$${mt}）`);}
     });
@@ -687,7 +698,7 @@ function copyOrder(){
     const o=getOrder(d.name,m);
     Object.keys(o.items||{}).forEach(k=>{
       const{id,size,ice,sugar,addon}=parseKey(k);const it=findItem(r?.items,id);
-      if(it){const lbl=buildLabel(it,size,ice,sugar,addon);if(!allC[lbl])allC[lbl]={qty:0,price:getPrice(it,size)};allC[lbl].qty+=(o.items[k]||0);}
+      if(it){const lbl=buildLabel(it,size,ice,sugar,addon);if(!allC[lbl])allC[lbl]={qty:0,price:getPrice(it,size,addon)};allC[lbl].qty+=(o.items[k]||0);}
     });
   }));
   lines.push('─'.repeat(22),'【彙整清單（叫飲料用）】');
@@ -855,7 +866,7 @@ function processCsv(file,box,txt){
   tryRead(['UTF-8','Big5','GBK']);
 }
 function downloadCsvTemplate(){
-  const rows=['# 格式：飲品名稱,M價格,分類,加料選項(用|分隔),甜度固定(填「甜度固定」或留空),L價格(無大杯留空)','厚哩青茶,30,厚哩沏茶,,,','古釀冬瓜茶,30,厚哩沏茶,,甜度固定,','厚哩奶茶,50,品味醇奶,波霸|椰果|QQ,,60'];
+  const rows=['# 格式：飲品名稱,M價格,分類,加料選項(格式:名稱:加價|名稱:加價),甜度固定,L價格','厚哩青茶,30,厚哩沏茶,,,','古釀冬瓜茶,30,厚哩沏茶,,甜度固定,','厚哩奶茶,50,品味醇奶,波霸|椰果|QQ,,60'];
   const blob=new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='飲料菜單範本.csv';a.click();
 }
