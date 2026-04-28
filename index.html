@@ -478,7 +478,8 @@ function renderDepts(){
       const has=Object.keys(getOrder(dept.name,m).items||{}).length>0;
       const locked=isLocked(dept.name,m);
       if(locked)return `<div class="mchip locked">${m}<span class="locked-badge">✓已送出</span></div>`;
-      return `<div class="mchip${act?' active':''}" onclick="selMember('${dept.name}','${m}')">${m}${has?`<span class="mchip-sub">NT$${t}</span>`:''}</div>`;
+      const esc_d=dept.name.replace(/'/g,"\\'"),esc_m=m.replace(/'/g,"\\'");
+      return `<div class="mchip${act?' active':''}" onclick="selMember('${esc_d}','${esc_m}')">${m}${has?`<span class="mchip-sub">NT$${t}</span>`:''}</div>`;
     }).join('');
     return `<div class="dept-block">
       <div class="dept-head" onclick="toggleDept(${di})">
@@ -490,7 +491,12 @@ function renderDepts(){
   }).join('');
 }
 function toggleDept(di){const el=document.getElementById('dm'+di);el.style.display=el.style.display==='none'?'':'none';}
-function selMember(dept,name){if(isLocked(dept,name)){showToast(name+' 已送出，無法更改');return;}curMember={dept,name};renderDepts();renderDrinks();}
+function selMember(dept,name){
+  if(isLocked(dept,name)){showToast(name+' 已送出，無法更改');return;}
+  curMember={dept,name};
+  renderDepts();
+  renderDrinks();
+}
 
 function renderCatBar(){
   const r=todayShop();const cats=['全部',...new Set((r?.items||[]).map(i=>i.cat))];
@@ -555,7 +561,7 @@ function renderDrinks(){
       </div>`;
     });
 
-    return `<div class="dcard${mq>0?' sel':''}" onclick="openAddDrink(${item.id},event)">
+    return `<div class="dcard${mq>0?' sel':''}" onclick="openAddDrink('${item.id}',event)">
       ${tq>0?`<div class="qbadge">${tq}</div>`:''}
       <div class="cat-tag">${item.cat}</div>
       <div class="dname">${item.name}</div>
@@ -579,7 +585,7 @@ function renderDrinks(){
 function openAddDrink(id,e){
   if(e)e.stopPropagation();
   if(!curMember){showToast('請先選擇名字');return;}
-  const r=todayShop();const item=r&&(r.items||[]).find(i=>i.id===id);if(!item)return;
+  const r=todayShop();const item=r&&(r.items||[]).find(i=>String(i.id)===String(id));if(!item){showToast("找不到飲品");return;}
   _pi=item;_pSize=item.priceL?'M':'';_pIce='正常冰';_pSugar=item.fixedSugar?'甜度固定':'半糖';_pAddon='';
   renderModal();document.getElementById('modalBg').classList.add('open');
 }
