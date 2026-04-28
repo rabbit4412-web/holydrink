@@ -626,10 +626,17 @@ function setPA(v){_pAddon=v;renderModal();}
 
 function confirmModal(){
   if(_pi){
+    // 確認還有選人員
+    if(!curMember){showToast('請先選擇你的名字');return;}
     const sugar=_pi.fixedSugar?'甜度固定':_pSugar;
-    const k=buildKey(_pi.id,_pSize,_pIce,sugar,_pAddon);
+    const size=_pi.priceL?_pSize:'';
+    const k=buildKey(_pi.id,size,_pIce,sugar,_pAddon);
+    const savedPi=_pi;
+    _pi=null;
+    document.getElementById('modalBg').classList.remove('open');
     mutOrder(curMember.dept,curMember.name,o=>{if(!o.items)o.items={};o.items[k]=(o.items[k]||0)+1;});
-    _pi=null;closeModal();renderDepts();renderDrinks();updateHdr();
+    renderDepts();renderDrinks();updateHdr();
+    showToast('已加入：'+savedPi.name);
   }else if(_modalCb){if(_modalCb())closeModal();}
 }
 function closeModal(){document.getElementById('modalBg').classList.remove('open');_pi=null;_modalCb=null;}
