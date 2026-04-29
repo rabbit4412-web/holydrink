@@ -329,7 +329,7 @@ button,input,select{font-family:inherit;}
 </div>
 
 <!-- 確認送出 Modal -->
-<div class="mbg" id="confirmModal">
+<div class="mbg" id="confirmModal" onclick="event.stopPropagation()">
   <div class="modal">
     <h3 id="cmTitle">確認送出訂單？</h3>
     <div id="cmBody" style="font-size:13px;color:var(--sub);margin-bottom:4px;"></div>
@@ -791,19 +791,23 @@ function doQty(key,delta){
   });
   rDepts();rDrinks();rHdr();
 }
+let _confirmMem=null; // 備份 curMem 給 doConfirmOK 用
 function doConfirm(){
   if(!curMem) return;
   const o=getOrd(curMem.d,curMem.m);
   if(!Object.keys(o.items||{}).length){toast('請先選擇飲料');return;}
   const total=mTotal(curMem.d,curMem.m);
+  _confirmMem=curMem; // 備份
   document.getElementById('cmTitle').textContent=curMem.m+' 確認送出訂單？';
   document.getElementById('cmBody').textContent='合計：NT$'+total;
   document.getElementById('confirmModal').classList.add('on');
 }
 function doConfirmOK(){
   document.getElementById('confirmModal').classList.remove('on');
-  if(!curMem) return;
-  lock(curMem.d,curMem.m);
+  const mem=curMem||_confirmMem; // 用備份
+  _confirmMem=null;
+  if(!mem){toast('錯誤：請重新選擇名字');return;}
+  lock(mem.d,mem.m);
   curMem=null;
   rAll();
   toast('訂單已送出！');
