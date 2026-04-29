@@ -512,7 +512,7 @@ function mTotal(dept,mem){
   const r=tRid();if(!r)return 0;
   const o=getOrd(dept,mem);
   return Object.keys(o.items||{}).reduce((s,k)=>{
-    const {id,size,addon}=pk(k);
+    const {id,size,tea,ice,sugar,addon}=pk(k);
     const it=findItem(r,id);
     return s+(it?gPrice(it,size,addon)*(o.items[k]||0):0);
   },0);
@@ -628,7 +628,7 @@ function rDrinks(){
     // Order rows
     const oRows=myKeys.map(k=>{
       const {size,tea,ice,sugar,addon}=pk(k),qty=o.items[k];
-      const tag=lbl(item,size,ice,sugar,addon);
+      const tag=lbl(item,size,tea,ice,sugar,addon);
       return `<div class="orow-card">
         <span class="otag">${tag}</span>
         <div class="qctrl">
@@ -822,7 +822,7 @@ function rSum(){
       let mt=0,mi=[];
       const o=getOrd(dep.name,m);
       Object.keys(o.items||{}).forEach(k=>{
-        const {id,size,ice,sugar,addon}=pk(k);
+        const {id,size,tea,ice,sugar,addon}=pk(k);
         const it=findItem(tRid(),id);
         if(it){const s=gPrice(it,size,addon)*(o.items[k]||0);mt+=s;dt+=s;gT+=s;gC+=(o.items[k]||0);mi.push(lbl(it,size,tea,ice,sugar,addon)+' ×'+(o.items[k]||0));}
       });
@@ -835,7 +835,7 @@ function rSum(){
   depts.forEach(dep=>dep.members.forEach(m=>{
     const o=getOrd(dep.name,m);
     Object.keys(o.items||{}).forEach(k=>{
-      const {id,size,ice,sugar,addon}=pk(k);
+      const {id,size,tea,ice,sugar,addon}=pk(k);
       const it=findItem(tRid(),id);
       if(it){const lb=lbl(it,size,tea,ice,sugar,addon);if(!all[lb])all[lb]={p:gPrice(it,size,addon),q:0};all[lb].q+=(o.items[k]||0);}
     });
@@ -854,7 +854,7 @@ function doCopy(){
     let dl=[];dep.members.forEach(m=>{
       let mi=[],mt=0;const o=getOrd(dep.name,m);
       Object.keys(o.items||{}).forEach(k=>{
-        const {id,size,ice,sugar,addon}=pk(k);const it=findItem(tRid(),id);
+        const {id,size,tea,ice,sugar,addon}=pk(k);const it=findItem(tRid(),id);
         if(it){mt+=gPrice(it,size,addon)*(o.items[k]||0);cnt+=(o.items[k]||0);mi.push(lbl(it,size,tea,ice,sugar,addon)+' ×'+(o.items[k]||0));}
       });
       if(mi.length){tot+=mt;dl.push('  '+m+'：'+mi.join('、')+'（NT$'+mt+'）');}
@@ -865,7 +865,7 @@ function doCopy(){
   depts.forEach(dep=>dep.members.forEach(m=>{
     const o=getOrd(dep.name,m);
     Object.keys(o.items||{}).forEach(k=>{
-      const {id,size,ice,sugar,addon}=pk(k);const it=findItem(tRid(),id);
+      const {id,size,tea,ice,sugar,addon}=pk(k);const it=findItem(tRid(),id);
       if(it){const lb=lbl(it,size,tea,ice,sugar,addon);if(!allC[lb])allC[lb]={q:0,p:gPrice(it,size,addon)};allC[lb].q+=(o.items[k]||0);}
     });
   }));
