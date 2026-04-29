@@ -622,7 +622,7 @@ function rDrinks(){
       :`<div class="prow"><span class="pval">NT$${item.price}</span></div>`;
     // Addon display
     const teaHtml=(item.tea&&item.tea.length)?`<div class="addo">茶類：${item.tea.join(' / ')}</div>`:'';
-    const hotHtml=(item.hotOptions&&item.hotOptions.length)?`<div class="addo">${item.hotOptions.includes('熱')&&item.hotOptions.includes('冰')?'冷熱可選':'☕ 熱飲'}</div>`:'';
+    const hotHtml=(item.hotOptions&&item.hotOptions.length)?`<div class="addo">溫度：${item.hotOptions.slice(0,3).join(' / ')}${item.hotOptions.length>3?'...':''}</div>`:'';
     const addHtml=(item.addon&&item.addon.length)
       ?`<div class="addo">加料：${item.addon.map(a=>aN(a)+'+'+aP(a)+'元').join(' / ')}</div>`:'';
     // Order rows
@@ -689,7 +689,13 @@ function openOM(id){
   PSUGAR=item.fixedSugar?'甜度固定':'半糖';
   PADDON='';
   PTEA=item.tea&&item.tea.length?item.tea[0]:'';
-  // 冰熱：如果有 hotOptions 含「熱」預設冰，含「熱|冰」預設冰
+  // 溫度：預設第一個選項，或正常冰
+  // 預設選「去冰」，沒有去冰就選第一個
+  if(item.hotOptions&&item.hotOptions.length){
+    PICE=item.hotOptions.includes('去冰')?'去冰':item.hotOptions[0];
+  } else {
+    PICE='去冰';
+  }
   PHOT=false;
   renderOM(item);
   document.getElementById('orderModal').classList.add('on');
@@ -714,25 +720,14 @@ function renderOM(item){
     </div></div>`;
   }
 
-  // 🌡️ 冰塊 / 溫熱
-  if(item.hotOptions&&item.hotOptions.includes('熱')&&item.hotOptions.includes('冰')){
-    // 可選熱或冰
-    h+=`<div class="osec"><div class="olbl">🌡️ 冷熱</div><div class="obts">
-      <button class="obt${!PHOT?' on':''}" onclick="setPhot(false)">冰飲</button>
-      <button class="obt${PHOT?' on':''}" onclick="setPhot(true)">熱飲</button>
+  // 🌡️ 溫度選項
+  if(item.hotOptions&&item.hotOptions.length>0){
+    // 欄E有設定：直接顯示所有選項
+    h+=`<div class="osec"><div class="olbl">🌡️ 溫度</div><div class="obts">
+      ${item.hotOptions.map(v=>`<button class="obt${PICE===v?' on':''}" onclick="setPice('${v}')">${v}</button>`).join('')}
     </div></div>`;
-    if(!PHOT){
-      h+=`<div class="osec"><div class="olbl">🧊 冰塊</div><div class="obts">
-        ${ICE.map(v=>`<button class="obt${PICE===v?' on':''}" onclick="setPice('${v}')">${v}</button>`).join('')}
-      </div></div>`;
-    }
-  } else if(item.hotOptions&&item.hotOptions.includes('熱')){
-    // 只能熱飲
-    h+=`<div class="osec"><div class="olbl">🌡️ 溫度</div>
-      <div style="font-size:12px;color:var(--a);padding:4px 0;">☕ 熱飲</div>
-    </div>`;
   } else {
-    // 預設只能選冰塊
+    // 欄E空白：顯示預設冰塊選項
     h+=`<div class="osec"><div class="olbl">🧊 冰塊</div><div class="obts">
       ${ICE.map(v=>`<button class="obt${PICE===v?' on':''}" onclick="setPice('${v}')">${v}</button>`).join('')}
     </div></div>`;
