@@ -1055,10 +1055,19 @@ function procCsv(file,box,txt){
         }
         else{errs.push('第'+(si+idx+1)+'行錯誤');return;}
         if(!name)return;
-        if(!price||price<=0){errs.push('第'+(si+idx+1)+'行價格無效');return;}
-        const item={id:iSeq++,name,price,cat};
+        // M價格空白時，嘗試用L價格
         const pl=priceLStr?Math.round(Number(priceLStr.replace(/[^0-9.]/g,''))):0;
-        if(pl>0)item.priceL=pl;
+        const origPrice=price; // 記錄原始M價格
+        if(!price||price<=0){
+          if(pl>0){
+            price=pl; // M空白時用L價格當單一價格，不顯示杯型
+          } else {
+            errs.push('第'+(si+idx+1)+'行無有效價格');return;
+          }
+        }
+        const item={id:iSeq++,name,price,cat};
+        // 只有 M 和 L 都填寫才顯示杯型選項
+        if(origPrice>0&&pl>0&&pl!==price)item.priceL=pl;
         if(teaStr){const tArr=teaStr.split('|').map(t=>t.trim()).filter(Boolean);if(tArr.length)item.tea=tArr;}
         if(hotStr){const hArr=hotStr.split('|').map(h=>h.trim()).filter(Boolean);if(hArr.length)item.hotOptions=hArr;}
         if(addonStr){const arr=addonStr.split('|').map(a=>a.trim()).filter(Boolean);if(arr.length)item.addon=arr;}
