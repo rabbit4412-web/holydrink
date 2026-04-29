@@ -328,6 +328,19 @@ button,input,select{font-family:inherit;}
   </div>
 </div>
 
+<!-- 確認送出 Modal -->
+<div class="mbg" id="confirmModal">
+  <div class="modal">
+    <h3 id="cmTitle">確認送出訂單？</h3>
+    <div id="cmBody" style="font-size:13px;color:var(--sub);margin-bottom:4px;"></div>
+    <div style="font-size:12px;color:var(--r);margin-top:8px;">⚠️ 送出後無法自行更改</div>
+    <div class="mbtns">
+      <button onclick="document.getElementById('confirmModal').classList.remove('on')">取消</button>
+      <button class="ok" onclick="doConfirmOK()">確定送出</button>
+    </div>
+  </div>
+</div>
+
 <!-- 圖片放大 -->
 <div class="imgbg" id="imgModal" onclick="closeImg()">
   <button class="imgclose">✕</button>
@@ -788,7 +801,13 @@ function doConfirm(){
   const o=getOrd(curMem.d,curMem.m);
   if(!Object.keys(o.items||{}).length){toast('請先選擇飲料');return;}
   const total=mTotal(curMem.d,curMem.m);
-  if(!confirm(curMem.m+' 確認送出訂單？\n送出後無法更改\n合計：NT$'+total)) return;
+  document.getElementById('cmTitle').textContent=curMem.m+' 確認送出訂單？';
+  document.getElementById('cmBody').textContent='合計：NT$'+total;
+  document.getElementById('confirmModal').classList.add('on');
+}
+function doConfirmOK(){
+  document.getElementById('confirmModal').classList.remove('on');
+  if(!curMem) return;
   lock(curMem.d,curMem.m);
   curMem=null;
   rAll();
@@ -991,7 +1010,7 @@ function addMem(){
 function delMem(dn,name){const d=depts.find(d=>d.name===dn);if(!d)return;d.members=d.members.filter(m=>m!==name);pushD();toast('已刪除');}
 function chPwd(){const p=document.getElementById('inp-pwd').value.trim();if(!p){toast('請輸入密碼');return;}localStorage.setItem('drinkPwd',p);document.getElementById('inp-pwd').value='';toast('密碼已更新');}
 function clearToday(){
-  if(!confirm('確定清空今日訂單？'))return;
+  if(!window.confirm('確定清空今日訂單？'))return;
   const r=tRid();if(r&&orders[dk()])delete orders[dk()][r];
   locked[dk()]={};pushO();pushL();rAll();rSum();toast('已清空');
 }
