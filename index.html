@@ -517,9 +517,9 @@ function mTotal(dept,mem){
     return s+(it?gPrice(it,size,addon)*(o.items[k]||0):0);
   },0);
 }
-function isLk(d,m){return !!(locked[dk()]&&locked[dk()][d+'##'+m]);}
-function lock(d,m){if(!locked[dk()])locked[dk()]={};locked[dk()][d+'##'+m]=true;pushL();}
-function unlock(d,m){if(locked[dk()])delete locked[dk()][d+'##'+m];pushL();}
+function isLk(d,m){return !!(locked[dk()]&&locked[dk()][d+'__'+m]);}
+function lock(d,m){if(!locked[dk()])locked[dk()]={};locked[dk()][d+'__'+m]=true;pushL();}
+function unlock(d,m){if(locked[dk()])delete locked[dk()][d+'__'+m];pushL();}
 
 /* ── Render ── */
 function rAll(){rWeek();rShop();rDepts();rCat();rDrinks();rHdr();}
