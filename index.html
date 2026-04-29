@@ -225,7 +225,7 @@ button,input,select{font-family:inherit;}
     <div class="uz" id="uz" onclick="document.getElementById('csvIn').click()" ondragover="dov(event)" ondrop="dod(event)" ondragleave="dol()">
       <div class="uz-ic">📄</div>
       <div class="uz-t">點擊或拖曳 CSV 匯入菜單</div>
-      <div class="uz-s">格式：飲品名稱, M價格, 分類, 加料(名稱:加價|名稱:加價), 甜度固定, L價格</div>
+      <div class="uz-s">格式：飲品名稱, M價格, 分類, 茶類選項, 冰熱選項, 加料, 甜度固定, L價格</div>
     </div>
     <input type="file" id="csvIn" accept=".csv,.txt" style="display:none" onchange="onCsv(event)">
     <div class="abox" id="csvBox"><div class="abox-t" id="csvTxt"></div></div>
@@ -260,7 +260,11 @@ button,input,select{font-family:inherit;}
     </div>
     <div class="arow">
       <input id="inp-dcat" placeholder="分類">
-      <input id="inp-dadd" placeholder="加料(波霸:10|椰果:10)">
+      <input id="inp-dtea" placeholder="茶類選項(青茶|烏龍|紅茶)">
+    </div>
+    <div class="arow">
+      <input id="inp-dhot" placeholder="冰熱選項(熱|冰 或 熱 或留空)">
+      <input id="inp-dadd" placeholder="加料(波霸:10|椰果:10|奶蓋:33)">
       <label style="font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap;">
         <input type="checkbox" id="inp-dfx"> 甜度固定
       </label>
@@ -369,7 +373,7 @@ let curMem=null, curCat='全部', isAdmin=false, editRid=null, importRid=null;
 let rSeq=100, iSeq=1000, dPush=false;
 
 /* ── Pending order ── */
-let PID=null, PSIZE='M', PICE='正常冰', PSUGAR='半糖', PADDON='';
+let PID=null, PSIZE='M', PICE='正常冰', PSUGAR='半糖', PADDON='', PTEA='', PHOT=false;
 
 /* ── Firebase init ── */
 function initFB(){
@@ -465,12 +469,10 @@ function mutOrd(dept,mem,fn){
   pushO();
 }
 /* Key: "id|size|ice|sugar|addon" */
-function mk(id,size,ice,sugar,addon){
-  return [String(id),size||'',ice||'',sugar||'',addon||''].join('|');
-}
+function mk(id,size,tea,ice,sugar,addon){return [String(id),size||'',tea||'',ice||'',sugar||'',addon||''].join('|');}
 function pk(k){
   const p=k.split('|');
-  return{id:p[0]||'',size:p[1]||'',ice:p[2]||'',sugar:p[3]||'',addon:p[4]||''};
+  return{id:p[0]||'',size:p[1]||'',tea:p[2]||'',ice:p[3]||'',sugar:p[4]||'',addon:p[5]||''};
 }
 function aN(a){return a.includes(':')?a.split(':')[0]:a;}
 function aP(a){return a.includes(':')?parseInt(a.split(':')[1])||10:10;}
@@ -479,10 +481,12 @@ function gPrice(item,size,addon){
   if(addon) p+=aP(addon);
   return p;
 }
-function lbl(item,size,ice,sugar,addon){
+function lbl(item,size,tea,ice,sugar,addon){
   let s=item.name;
   if(size&&item.priceL) s+=' ('+size+')';
-  if(ice) s+=' | '+ice;
+  if(tea) s+=' | '+tea;
+  if(ice==='熱飲') s+=' | ☕熱飲';
+  else if(ice) s+=' | '+ice;
   if(item.fixedSugar) s+=' | 甜度固定';
   else if(sugar) s+=' | '+sugar;
   if(addon) s+=' | +'+aN(addon);
@@ -604,11 +608,13 @@ function rDrinks(){
       ?`<div class="prow"><span class="psz">M</span><span class="pval">NT$${item.price}</span><span class="psep">·</span><span class="psz">L</span><span class="pval">NT$${item.priceL}</span></div>`
       :`<div class="prow"><span class="pval">NT$${item.price}</span></div>`;
     // Addon display
+    const teaHtml=(item.tea&&item.tea.length)?`<div class="addo">茶類：${item.tea.join(' / ')}</div>`:'';
+    const hotHtml=(item.hotOptions&&item.hotOptions.length)?`<div class="addo">${item.hotOptions.includes('熱')&&item.hotOptions.includes('冰')?'冷熱可選':'☕ 熱飲'}</div>`:'';
     const addHtml=(item.addon&&item.addon.length)
       ?`<div class="addo">加料：${item.addon.map(a=>aN(a)+'+'+aP(a)+'元').join(' / ')}</div>`:'';
     // Order rows
     const oRows=myKeys.map(k=>{
-      const {size,ice,sugar,addon}=pk(k),qty=o.items[k];
+      const {size,tea,ice,sugar,addon}=pk(k),qty=o.items[k];
       const tag=lbl(item,size,ice,sugar,addon);
       return `<div class="orow-card">
         <span class="otag">${tag}</span>
@@ -625,7 +631,7 @@ function rDrinks(){
       <div class="dname">${item.name}</div>
       ${priceHtml}
       ${item.fixedSugar?'<div class="fixd">甜度固定</div>':''}
-      ${addHtml}
+      ${teaHtml}${hotHtml}${addHtml}
       ${oRows}
     </div>`;
   }).join('');
@@ -664,7 +670,14 @@ function openOM(id){
   const r=tShop();
   const item=(r?.items||[]).find(i=>String(i.id)===String(id));
   if(!item){toast('找不到飲品');return;}
-  PID=id; PSIZE=item.priceL?'M':''; PICE='正常冰'; PSUGAR=item.fixedSugar?'甜度固定':'半糖'; PADDON='';
+  PID=id;
+  PSIZE=item.priceL?'M':'';
+  PICE='正常冰';
+  PSUGAR=item.fixedSugar?'甜度固定':'半糖';
+  PADDON='';
+  PTEA=item.tea&&item.tea.length?item.tea[0]:'';
+  // 冰熱：如果有 hotOptions 含「熱」預設冰，含「熱|冰」預設冰
+  PHOT=false;
   renderOM(item);
   document.getElementById('orderModal').classList.add('on');
 }
@@ -672,23 +685,57 @@ function renderOM(item){
   const priceNow=(PSIZE==='L'&&item.priceL)?item.priceL:item.price;
   document.getElementById('omTitle').textContent=item.name+' — NT$'+priceNow;
   let h='';
+
+  // 📏 杯型
   if(item.priceL){
     h+=`<div class="osec"><div class="olbl">📏 杯型</div><div class="obts">
-      <button class="obt${PSIZE==='M'?' on':''}" onclick="setPsize('M',this)">M 中杯 NT$${item.price}</button>
-      <button class="obt${PSIZE==='L'?' on':''}" onclick="setPsize('L',this)">L 大杯 NT$${item.priceL}</button>
+      <button class="obt${PSIZE==='M'?' on':''}" onclick="setPsize('M')">M 中杯 NT$${item.price}</button>
+      <button class="obt${PSIZE==='L'?' on':''}" onclick="setPsize('L')">L 大杯 NT$${item.priceL}</button>
     </div></div>`;
   }
-  h+=`<div class="osec"><div class="olbl">🧊 冰塊</div><div class="obts">
-    ${ICE.map(v=>`<button class="obt${PICE===v?' on':''}" onclick="setPice('${v}',this)">${v}</button>`).join('')}
-  </div></div>`;
+
+  // 🍃 茶類選項
+  if(item.tea&&item.tea.length>0){
+    h+=`<div class="osec"><div class="olbl">🍃 茶類</div><div class="obts">
+      ${item.tea.map(t=>`<button class="obt${PTEA===t?' on':''}" onclick="setPtea('${t}')">${t}</button>`).join('')}
+    </div></div>`;
+  }
+
+  // 🌡️ 冰塊 / 溫熱
+  if(item.hotOptions&&item.hotOptions.includes('熱')&&item.hotOptions.includes('冰')){
+    // 可選熱或冰
+    h+=`<div class="osec"><div class="olbl">🌡️ 冷熱</div><div class="obts">
+      <button class="obt${!PHOT?' on':''}" onclick="setPhot(false)">冰飲</button>
+      <button class="obt${PHOT?' on':''}" onclick="setPhot(true)">熱飲</button>
+    </div></div>`;
+    if(!PHOT){
+      h+=`<div class="osec"><div class="olbl">🧊 冰塊</div><div class="obts">
+        ${ICE.map(v=>`<button class="obt${PICE===v?' on':''}" onclick="setPice('${v}')">${v}</button>`).join('')}
+      </div></div>`;
+    }
+  } else if(item.hotOptions&&item.hotOptions.includes('熱')){
+    // 只能熱飲
+    h+=`<div class="osec"><div class="olbl">🌡️ 溫度</div>
+      <div style="font-size:12px;color:var(--a);padding:4px 0;">☕ 熱飲</div>
+    </div>`;
+  } else {
+    // 預設只能選冰塊
+    h+=`<div class="osec"><div class="olbl">🧊 冰塊</div><div class="obts">
+      ${ICE.map(v=>`<button class="obt${PICE===v?' on':''}" onclick="setPice('${v}')">${v}</button>`).join('')}
+    </div></div>`;
+  }
+
+  // 🍬 糖度
   h+=`<div class="osec"><div class="olbl">🍬 糖度</div>`;
   if(item.fixedSugar){h+=`<div style="font-size:12px;color:var(--a);padding:4px 0;">甜度固定，無法更改</div>`;}
-  else{h+=`<div class="obts">${SUGAR.map(v=>`<button class="obt${PSUGAR===v?' on':''}" onclick="setPsugar('${v}',this)">${v}</button>`).join('')}</div>`;}
+  else{h+=`<div class="obts">${SUGAR.map(v=>`<button class="obt${PSUGAR===v?' on':''}" onclick="setPsugar('${v}')">${v}</button>`).join('')}</div>`;}
   h+=`</div>`;
+
+  // ➕ 加料
   if(item.addon&&item.addon.length){
     h+=`<div class="osec"><div class="olbl">➕ 加料</div><div class="obts">
-      ${item.addon.map(a=>`<button class="obt${PADDON===a?' on':''}" onclick="setPaddon('${a}',this)">${aN(a)} <span style="font-size:10px;opacity:.75;">+${aP(a)}元</span></button>`).join('')}
-      <button class="obt${PADDON===''?' on':''}" onclick="setPaddon('',this)">不加料</button>
+      ${item.addon.map(a=>`<button class="obt${PADDON===a?' on':''}" onclick="setPaddon('${a}')">${aN(a)} <span style="font-size:10px;opacity:.75;">+${aP(a)}元</span></button>`).join('')}
+      <button class="obt${PADDON===''?' on':''}" onclick="setPaddon('')">不加料</button>
     </div></div>`;
   }
   document.getElementById('omBody').innerHTML=h;
@@ -702,10 +749,13 @@ function setOpt(key,val,btn,fn){
   const item=(r.items||[]).find(i=>String(i.id)===String(PID));
   if(item) renderOM(item);
 }
-function setPsize(v,b){PSIZE=v;const r=tShop();if(r){const it=(r.items||[]).find(i=>String(i.id)===String(PID));if(it)renderOM(it);}}
-function setPice(v,b){PICE=v;const r=tShop();if(r){const it=(r.items||[]).find(i=>String(i.id)===String(PID));if(it)renderOM(it);}}
-function setPsugar(v,b){PSUGAR=v;const r=tShop();if(r){const it=(r.items||[]).find(i=>String(i.id)===String(PID));if(it)renderOM(it);}}
-function setPaddon(v,b){PADDON=v;const r=tShop();if(r){const it=(r.items||[]).find(i=>String(i.id)===String(PID));if(it)renderOM(it);}}
+function rOM(){const r=tShop();if(r&&PID!==null){const it=(r.items||[]).find(i=>String(i.id)===String(PID));if(it)renderOM(it);}}
+function setPsize(v){PSIZE=v;rOM();}
+function setPtea(v){PTEA=v;rOM();}
+function setPhot(v){PHOT=v;if(v){PICE='熱飲';}else{PICE='正常冰';}rOM();}
+function setPice(v){PICE=v;rOM();}
+function setPsugar(v){PSUGAR=v;rOM();}
+function setPaddon(v){PADDON=v;rOM();}
 function closeOM(){document.getElementById('orderModal').classList.remove('on');PID=null;}
 function doAddDrink(){
   if(PID===null){toast('請重新選擇飲品');return;}
@@ -715,7 +765,9 @@ function doAddDrink(){
   if(!item){toast('找不到飲品');closeOM();return;}
   const sugar=item.fixedSugar?'甜度固定':PSUGAR;
   const size=item.priceL?PSIZE:'';
-  const k=mk(PID,size,PICE,sugar,PADDON);
+  const tea=PTEA||'';
+  const ice=PHOT?'熱飲':PICE;
+  const k=mk(PID,size,tea,ice,sugar,PADDON);
   const savedName=item.name;
   document.getElementById('orderModal').classList.remove('on');
   PID=null;
@@ -754,7 +806,7 @@ function rSum(){
       Object.keys(o.items||{}).forEach(k=>{
         const {id,size,ice,sugar,addon}=pk(k);
         const it=findItem(tRid(),id);
-        if(it){const s=gPrice(it,size,addon)*(o.items[k]||0);mt+=s;dt+=s;gT+=s;gC+=(o.items[k]||0);mi.push(lbl(it,size,ice,sugar,addon)+' ×'+(o.items[k]||0));}
+        if(it){const s=gPrice(it,size,addon)*(o.items[k]||0);mt+=s;dt+=s;gT+=s;gC+=(o.items[k]||0);mi.push(lbl(it,size,tea,ice,sugar,addon)+' ×'+(o.items[k]||0));}
       });
       if(mi.length) pr+=`<div class="sper"><span class="spn">${m}</span><span class="spi">${mi.join('　')}</span><span class="spa">NT$${mt}</span></div>`;
     });
@@ -767,7 +819,7 @@ function rSum(){
     Object.keys(o.items||{}).forEach(k=>{
       const {id,size,ice,sugar,addon}=pk(k);
       const it=findItem(tRid(),id);
-      if(it){const lb=lbl(it,size,ice,sugar,addon);if(!all[lb])all[lb]={p:gPrice(it,size,addon),q:0};all[lb].q+=(o.items[k]||0);}
+      if(it){const lb=lbl(it,size,tea,ice,sugar,addon);if(!all[lb])all[lb]={p:gPrice(it,size,addon),q:0};all[lb].q+=(o.items[k]||0);}
     });
   }));
   const ents=Object.entries(all).sort((a,b)=>a[0].localeCompare(b[0],'zh-Hant'));
@@ -785,7 +837,7 @@ function doCopy(){
       let mi=[],mt=0;const o=getOrd(dep.name,m);
       Object.keys(o.items||{}).forEach(k=>{
         const {id,size,ice,sugar,addon}=pk(k);const it=findItem(tRid(),id);
-        if(it){mt+=gPrice(it,size,addon)*(o.items[k]||0);cnt+=(o.items[k]||0);mi.push(lbl(it,size,ice,sugar,addon)+' ×'+(o.items[k]||0));}
+        if(it){mt+=gPrice(it,size,addon)*(o.items[k]||0);cnt+=(o.items[k]||0);mi.push(lbl(it,size,tea,ice,sugar,addon)+' ×'+(o.items[k]||0));}
       });
       if(mi.length){tot+=mt;dl.push('  '+m+'：'+mi.join('、')+'（NT$'+mt+'）');}
     });
@@ -796,7 +848,7 @@ function doCopy(){
     const o=getOrd(dep.name,m);
     Object.keys(o.items||{}).forEach(k=>{
       const {id,size,ice,sugar,addon}=pk(k);const it=findItem(tRid(),id);
-      if(it){const lb=lbl(it,size,ice,sugar,addon);if(!allC[lb])allC[lb]={q:0,p:gPrice(it,size,addon)};allC[lb].q+=(o.items[k]||0);}
+      if(it){const lb=lbl(it,size,tea,ice,sugar,addon);if(!allC[lb])allC[lb]={q:0,p:gPrice(it,size,addon)};allC[lb].q+=(o.items[k]||0);}
     });
   }));
   lines.push('─'.repeat(22),'【彙整清單】');
@@ -899,6 +951,8 @@ function addDrink(){
   const price=parseInt(document.getElementById('inp-dm').value)||0;
   const priceL=parseInt(document.getElementById('inp-dl').value)||0;
   const cat=document.getElementById('inp-dcat').value.trim()||'飲品';
+  const tea=document.getElementById('inp-dtea').value.trim();
+  const hot=document.getElementById('inp-dhot').value.trim();
   const addon=document.getElementById('inp-dadd').value.trim();
   const fixed=document.getElementById('inp-dfx').checked;
   if(!name||price<=0){toast('請輸入名稱與M價格');return;}
@@ -906,10 +960,12 @@ function addDrink(){
   if(!shops[editRid].items) shops[editRid].items=[];
   const item={id:iSeq++,name,price,cat};
   if(priceL>0) item.priceL=priceL;
+  if(tea){const tArr=tea.split('|').map(t=>t.trim()).filter(Boolean);if(tArr.length)item.tea=tArr;}
+  if(hot){const hArr=hot.split('|').map(h=>h.trim()).filter(Boolean);if(hArr.length)item.hotOptions=hArr;}
   if(addon) item.addon=addon.split('|').map(a=>a.trim()).filter(Boolean);
   if(fixed) item.fixedSugar=true;
   shops[editRid].items.push(item);pushS();
-  ['inp-dn','inp-dm','inp-dl','inp-dadd'].forEach(id=>document.getElementById(id).value='');
+  ['inp-dn','inp-dm','inp-dl','inp-dtea','inp-dhot','inp-dadd'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('inp-dfx').checked=false;
   rCat();rDrinks();rAdmin();toast('已新增：'+name);
 }
@@ -969,14 +1025,23 @@ function procCsv(file,box,txt){
         if(!line)return;
         const parts=line.split(sep).map(p=>p.trim());
         let name,price,cat='飲品',addonStr='',fixedStr='',priceLStr='';
-        if(isTab&&parts.length>=3){cat=parts[0];name=parts[1];price=Math.round(Number(parts[2].replace(/[^0-9.]/g,'')));addonStr=parts[3]||'';fixedStr=parts[4]||'';priceLStr=parts[5]||'';}
-        else if(!isTab&&parts.length>=2){name=parts[0];price=Math.round(Number(parts[1].replace(/[^0-9.]/g,'')));cat=parts[2]||'飲品';addonStr=parts[3]||'';fixedStr=parts[4]||'';priceLStr=parts[5]||'';}
+        let teaStr='',hotStr='';
+        if(isTab&&parts.length>=3){
+          cat=parts[0];name=parts[1];price=Math.round(Number(parts[2].replace(/[^0-9.]/g,'')));
+          teaStr=parts[3]||'';hotStr=parts[4]||'';addonStr=parts[5]||'';fixedStr=parts[6]||'';priceLStr=parts[7]||'';
+        } else if(!isTab&&parts.length>=2){
+          name=parts[0];price=Math.round(Number(parts[1].replace(/[^0-9.]/g,'')));
+          cat=parts[2]||'飲品';teaStr=parts[3]||'';hotStr=parts[4]||'';
+          addonStr=parts[5]||'';fixedStr=parts[6]||'';priceLStr=parts[7]||'';
+        }
         else{errs.push('第'+(si+idx+1)+'行錯誤');return;}
         if(!name)return;
         if(!price||price<=0){errs.push('第'+(si+idx+1)+'行價格無效');return;}
         const item={id:iSeq++,name,price,cat};
         const pl=priceLStr?Math.round(Number(priceLStr.replace(/[^0-9.]/g,''))):0;
         if(pl>0)item.priceL=pl;
+        if(teaStr){const tArr=teaStr.split('|').map(t=>t.trim()).filter(Boolean);if(tArr.length)item.tea=tArr;}
+        if(hotStr){const hArr=hotStr.split('|').map(h=>h.trim()).filter(Boolean);if(hArr.length)item.hotOptions=hArr;}
         if(addonStr){const arr=addonStr.split('|').map(a=>a.trim()).filter(Boolean);if(arr.length)item.addon=arr;}
         if(fixedStr&&fixedStr.includes('甜度固定'))item.fixedSugar=true;
         newItems.push(item);
