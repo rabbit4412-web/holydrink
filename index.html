@@ -302,8 +302,8 @@ const FB={
   messagingSenderId:"555132314787",
   appId:"1:555132314787:web:6f9a2e1932bbaab2e7cb16"
 };
-const DAYS=['一','二','三','四','五','HPD'];
-const DKEYS=['mon','tue','wed','thu','fri','HPD'];
+const DAYS=['一','二','三','四','五'];
+const DKEYS=['mon','tue','wed','thu','fri'];
 const ICE=['去冰','微冰','少冰','正常冰'];
 const SUGAR=['無糖','1分糖','2分糖','微糖','半糖','少糖','全糖'];
 
@@ -600,9 +600,16 @@ function doConfirmOK(){
 
 function rSum(){
   const r=tShop();let gT=0,gC=0,dh='';
+  let unlockedCnt=0;
   depts.forEach(dep=>{
     let dt=0,pr='';
     dep.members.forEach(m=>{
+      if(!isLk(dep.name,m)){
+        // 未送出：統計人數但不顯示
+        const o=getOrd(dep.name,m);
+        if(Object.keys(o.items||{}).length>0)unlockedCnt++;
+        return;
+      }
       let mt=0,mi=[];const o=getOrd(dep.name,m);
       Object.keys(o.items||{}).forEach(k=>{
         const{id,size,tea,ice,sugar,addon,pickup}=pk(k);const it=findItem(tRid(),id);
@@ -612,9 +619,13 @@ function rSum(){
     });
     if(pr)dh+=`<div class="sdept"><div class="sdh"><span class="sdt">${dep.name}</span><span class="sda">NT$${dt}</span></div>${pr}</div>`;
   });
+  if(unlockedCnt>0){
+    dh+=`<div style="background:var(--al);border:1px solid var(--a);border-radius:var(--rs);padding:10px 14px;margin-top:8px;font-size:12px;color:var(--a);">⏳ 尚有 ${unlockedCnt} 人未送出訂單，送出後才會顯示在總覽</div>`;
+  }
   document.getElementById('sumDept').innerHTML=dh||'<div class="empty">尚無訂單</div>';
   const all={};
   depts.forEach(dep=>dep.members.forEach(m=>{
+    if(!isLk(dep.name,m))return;
     const o=getOrd(dep.name,m);
     Object.keys(o.items||{}).forEach(k=>{
       const{id,size,tea,ice,sugar,addon,pickup}=pk(k);const it=findItem(tRid(),id);
@@ -633,6 +644,7 @@ function doCopy(){
   const r=tShop();let lines=[`【飲料訂單 週${DAYS[dayIdx]}${r?' · '+r.name:''}】`],tot=0,cnt=0;
   depts.forEach(dep=>{
     let dl=[];dep.members.forEach(m=>{
+      if(!isLk(dep.name,m))return;
       let mi=[],mt=0;const o=getOrd(dep.name,m);
       Object.keys(o.items||{}).forEach(k=>{
         const{id,size,tea,ice,sugar,addon,pickup}=pk(k);const it=findItem(tRid(),id);
@@ -644,6 +656,7 @@ function doCopy(){
   });
   const allC={};
   depts.forEach(dep=>dep.members.forEach(m=>{
+    if(!isLk(dep.name,m))return;
     const o=getOrd(dep.name,m);
     Object.keys(o.items||{}).forEach(k=>{
       const{id,size,tea,ice,sugar,addon,pickup}=pk(k);const it=findItem(tRid(),id);
@@ -727,7 +740,35 @@ function dov(e){e.preventDefault();document.getElementById('uz').classList.add('
 function dol(){document.getElementById('uz').classList.remove('drag');}
 function dod(e){e.preventDefault();dol();const f=e.dataTransfer.files[0];if(f)procCsv(f);}
 function onCsv(e){const f=e.target.files[0];if(f)procCsv(f);e.target.value='';}
-function onReupCsv(e){const f=e.target.files[0];if(!f)return;if(editRid&&shops[editRid]&&confirm('清除「'+shops[editRid].name+'」現有飲品並重新匯入？')){shops[editRid].items=[];procCsv(f,document.getElementById('reupBox'),document.getElementById('reupTxt'));}e.target.value='';}
+function onReupCsv(e){
+  const f=e.target.files[0];if(!f)return;
+  if(editRid&&shops[editRid]){
+    const rid=tRid();
+    const todayOrders=rid?orders[dk()]?.[rid]:null;
+    const hasOrders=todayOrders&&Object.keys(todayOrders).some(dept=>
+      Object.keys(todayOrders[dept]||{}).some(m=>
+        Object.keys(todayOrders[dept][m]?.items||{}).length>0
+      )
+    );
+    if(hasOrders){
+      const warnMsg=[
+        '警告：今日已有人點餐！',
+        '',
+        '重新匯入菜單後，已點餐的資料將無法在總覽顯示（item id 不符）。',
+        '',
+        '建議先點「清空今日訂單」再匯入菜單。',
+        '',
+        '確定要繼續匯入嗎？'
+      ].join('\n');
+      if(!confirm(warnMsg)){e.target.value='';return;}
+    }
+    if(confirm('清除「'+shops[editRid].name+'」現有飲品並重新匯入？')){
+      shops[editRid].items=[];
+      procCsv(f,document.getElementById('reupBox'),document.getElementById('reupTxt'));
+    }
+  }
+  e.target.value='';
+}
 function procCsv(file,box,txt){
   if(!box){box=document.getElementById('csvBox');txt=document.getElementById('csvTxt');}
   const rid=importRid||editRid;
