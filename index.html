@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>公司飲料訂購</title>
+<!-- v3.0 all-fixes + pickup -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
@@ -19,14 +20,12 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;padding-bottom:80px;}
 button,input,select{font-family:inherit;}
-/* Banner */
 #banner{padding:7px 14px;font-size:12px;display:flex;align-items:center;gap:8px;background:#d1fae5;border-bottom:1px solid #34d399;color:#065f46;}
 #banner.warn{background:#fff3cd;border-color:#ffc107;color:#856404;}
 .dot{width:8px;height:8px;border-radius:50%;background:#4ade80;flex:none;}
 .dot.s{background:#fbbf24;animation:p .8s infinite;}
 .dot.off{background:#f87171;}
 @keyframes p{0%,100%{opacity:1;}50%{opacity:.3;}}
-/* Header */
 .hdr{background:var(--g);padding:12px 16px 8px;position:sticky;top:0;z-index:60;box-shadow:0 2px 10px rgba(0,0,0,.2);}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
 .hdr h1{font-size:15px;font-weight:700;color:#fff;}
@@ -38,40 +37,33 @@ button,input,select{font-family:inherit;}
 .wd{flex:none;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;color:rgba(255,255,255,.6);cursor:pointer;border:1px solid transparent;}
 .wd.on{background:rgba(255,255,255,.22);color:#fff;border-color:rgba(255,255,255,.35);}
 .wd.has::after{content:'●';font-size:6px;margin-left:3px;vertical-align:middle;color:#9FE1CB;}
-/* Tabs */
 .tabs{display:flex;background:var(--sf);border-bottom:1px solid var(--bd);position:sticky;top:90px;z-index:50;}
 .tab{flex:1;padding:10px 4px;font-size:12px;font-weight:500;color:var(--sub);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;}
 .tab.on{color:var(--g);border-bottom-color:var(--g);}
 .panel{display:none;padding:14px;max-width:640px;margin:0 auto;}
 .panel.on{display:block;}
-/* Labels */
 .lbl{font-size:11px;font-weight:700;color:var(--hint);letter-spacing:.06em;margin:14px 0 7px;}
-/* Dept blocks */
 .db{background:var(--sf);border-radius:var(--rad);margin-bottom:10px;border:1px solid var(--bd);overflow:hidden;}
 .dh{padding:10px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;}
 .dn{font-size:14px;font-weight:700;}
 .dc{font-size:11px;color:var(--sub);margin-left:6px;}
 .dt{font-size:13px;font-weight:700;color:var(--g);}
 .dm{padding:8px 12px 12px;display:flex;flex-wrap:wrap;gap:6px;}
-/* Member chips */
 .mc{padding:7px 12px;border-radius:20px;font-size:13px;font-weight:500;background:var(--sf);border:1.5px solid var(--bd2);cursor:pointer;color:var(--tx);display:inline-flex;align-items:center;gap:4px;}
 .mc.on{background:var(--gl);border-color:var(--g);color:var(--gd);}
 .mc.lk{background:#E6F1FB;color:#185FA5;border-color:#85B7EB;cursor:default;}
 .mc-s{font-size:10px;background:var(--g);color:#fff;padding:1px 5px;border-radius:10px;}
 .lkb{font-size:10px;background:#E6F1FB;color:#185FA5;padding:1px 6px;border-radius:10px;}
-/* Shop bar */
 .sbar{background:var(--sf);border-radius:var(--rad);margin-bottom:12px;padding:12px 14px;border:1px solid var(--bd);}
 .sname{font-size:14px;font-weight:700;margin-bottom:2px;}
 .ssub{font-size:12px;color:var(--sub);}
 .simgs{display:flex;gap:8px;overflow-x:auto;margin-top:10px;padding-bottom:4px;}
 .simgs img{height:88px;border-radius:8px;cursor:pointer;flex:none;object-fit:cover;}
-/* Cat bar */
 .cscroll{overflow-x:auto;margin-bottom:10px;}
 .cscroll::-webkit-scrollbar{display:none;}
 .cbar{display:flex;gap:6px;width:max-content;}
 .cb{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;border:1.5px solid var(--bd2);background:var(--sf);cursor:pointer;color:var(--sub);white-space:nowrap;}
 .cb.on{background:var(--g);border-color:var(--g);color:#fff;}
-/* Drink grid */
 .dgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
 .dcard{background:var(--sf);border-radius:var(--rad);border:1.5px solid var(--bd);cursor:pointer;padding:11px;position:relative;transition:border-color .12s;}
 .dcard.sel{border-color:var(--g);background:var(--gl);}
@@ -86,14 +78,11 @@ button,input,select{font-family:inherit;}
 .psep{color:var(--bd2);margin:0 4px;}
 .fixd{font-size:10px;color:var(--a);margin-top:2px;}
 .addo{font-size:10px;color:var(--sub);margin-top:2px;line-height:1.5;}
-/* Order rows on card */
 .orow-card{display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap;}
 .otag{font-size:10px;background:var(--gl);color:var(--gd);padding:2px 7px;border-radius:10px;}
 .qctrl{display:flex;align-items:center;gap:5px;margin-top:4px;}
 .qb{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--bd2);background:rgba(255,255,255,.8);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-/* Confirm button */
 .btnok{width:100%;padding:12px;background:var(--g);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;margin-top:10px;}
-/* Summary */
 .sdept{background:var(--sf);border-radius:var(--rad);margin-bottom:10px;overflow:hidden;border:1px solid var(--bd);}
 .sdh{padding:10px 14px;background:var(--sf2);display:flex;justify-content:space-between;}
 .sdt{font-size:13px;font-weight:700;}
@@ -112,7 +101,6 @@ button,input,select{font-family:inherit;}
 .tcnt{font-size:12px;color:var(--sub);}
 .btncopy{width:100%;padding:10px;background:var(--sf);border:1.5px solid var(--g);border-radius:var(--rs);font-size:13px;font-weight:600;color:var(--g);cursor:pointer;margin-bottom:8px;}
 .empty{padding:24px;text-align:center;font-size:13px;color:var(--hint);}
-/* Admin */
 .asec{background:var(--sf);border-radius:var(--rad);margin-bottom:12px;padding:14px;border:1px solid var(--bd);}
 .asec h3{font-size:14px;font-weight:700;margin-bottom:10px;}
 .arow{display:flex;gap:7px;margin-bottom:8px;flex-wrap:wrap;}
@@ -124,7 +112,6 @@ button,input,select{font-family:inherit;}
 .chip{padding:6px 12px;border-radius:20px;font-size:13px;background:var(--sf);border:1.5px solid var(--bd2);cursor:pointer;color:var(--tx);}
 .chip.on{background:var(--gl);border-color:var(--g);color:var(--gd);}
 .crow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
-/* Upload */
 .uz{border:2px dashed var(--bd2);border-radius:var(--rad);padding:22px 16px;text-align:center;cursor:pointer;margin-bottom:10px;}
 .uz:hover,.uz.drag{border-color:var(--g);background:var(--gl);}
 .uz-ic{font-size:26px;margin-bottom:5px;}
@@ -135,7 +122,6 @@ button,input,select{font-family:inherit;}
 .abox.ok{background:var(--gl);border-color:#9FE1CB;color:var(--gd);}
 .abox.err{background:var(--rl);border-color:#F09595;color:#791F1F;}
 .abox-t{font-size:13px;}
-/* Modal */
 .mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:16px;}
 .mbg.on{display:flex;}
 .modal{background:var(--sf);border-radius:var(--rad);padding:20px;width:100%;max-width:340px;max-height:88vh;overflow-y:auto;}
@@ -148,15 +134,12 @@ button,input,select{font-family:inherit;}
 .obts{display:flex;flex-wrap:wrap;gap:5px;}
 .obt{padding:5px 11px;border:1.5px solid var(--bd2);border-radius:20px;font-size:12px;cursor:pointer;background:var(--sf);}
 .obt.on{background:var(--g);color:#fff;border-color:var(--g);}
-/* Image modal */
 .imgbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;align-items:center;justify-content:center;padding:14px;}
 .imgbg.on{display:flex;}
 .imgbg img{max-width:100%;max-height:92vh;border-radius:10px;object-fit:contain;}
 .imgclose{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.18);border:none;color:#fff;font-size:18px;cursor:pointer;}
-/* Toast */
 .toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:400;white-space:nowrap;}
 .toast.on{opacity:1;}
-/* Login */
 .loginbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;}
 .loginbg.on{display:flex;}
 .loginbox{background:var(--sf);border-radius:var(--rad);padding:24px;width:270px;}
@@ -170,10 +153,7 @@ button,input,select{font-family:inherit;}
 <div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">Firebase 即時同步</span></div>
 <div class="hdr">
   <div class="hdr-top">
-    <div style="display:flex;align-items:center;">
-      <h1>🧋 飲料訂購</h1>
-      <span class="abadge" id="abadge" style="display:none">管理員</span>
-    </div>
+    <div style="display:flex;align-items:center;"><h1>🧋 飲料訂購</h1><span class="abadge" id="abadge" style="display:none">管理員</span></div>
     <div><div class="hamt" id="hamt">NT$0</div><div class="hsub">今日合計</div></div>
   </div>
   <div class="wrow" id="wrow"></div>
@@ -183,39 +163,24 @@ button,input,select{font-family:inherit;}
   <button class="tab" onclick="goTab('summary')" id="t-summary">總覽</button>
   <button class="tab" onclick="goTab('admin')" id="t-admin" style="display:none">⚙ 管理</button>
 </div>
-
-<!-- 點餐 -->
 <div class="panel on" id="p-order">
-  <div class="lbl">今日飲料店</div>
-  <div id="shopInfo"></div>
-  <div class="lbl">點餐人員</div>
-  <div id="deptArea"></div>
+  <div class="lbl">今日飲料店</div><div id="shopInfo"></div>
+  <div class="lbl">點餐人員</div><div id="deptArea"></div>
   <div class="lbl">飲料菜單</div>
   <div class="cscroll"><div class="cbar" id="catBar"></div></div>
   <div class="dgrid" id="drinkGrid"></div>
 </div>
-
-<!-- 總覽 -->
 <div class="panel" id="p-summary">
-  <div class="tbar">
-    <div><div style="font-size:13px;color:var(--sub)">今日合計</div><div class="tcnt" id="tcnt">共 0 杯</div></div>
-    <div class="tval" id="tamt">NT$0</div>
-  </div>
+  <div class="tbar"><div><div style="font-size:13px;color:var(--sub)">今日合計</div><div class="tcnt" id="tcnt">共 0 杯</div></div><div class="tval" id="tamt">NT$0</div></div>
   <button class="btncopy" onclick="doCopy()">📋 複製訂單（傳 LINE 用）</button>
-  <div class="lbl">各部門明細</div>
-  <div id="sumDept"></div>
+  <div class="lbl">各部門明細</div><div id="sumDept"></div>
   <div class="lbl">彙整清單（叫飲料用）</div>
   <div id="sumMerge" style="background:var(--sf);border-radius:var(--rad);border:1px solid var(--bd);overflow:hidden;"></div>
 </div>
-
-<!-- 管理 -->
 <div class="panel" id="p-admin">
   <div class="asec">
     <h3>🏪 步驟一：新增店家</h3>
-    <div class="arow">
-      <input id="inp-shop" placeholder="飲料店名稱（必填）">
-      <button class="bsm" onclick="addShop()">建立</button>
-    </div>
+    <div class="arow"><input id="inp-shop" placeholder="飲料店名稱（必填）"><button class="bsm" onclick="addShop()">建立</button></div>
   </div>
   <div class="asec">
     <h3>🧋 步驟二：選店家匯入菜單</h3>
@@ -223,18 +188,16 @@ button,input,select{font-family:inherit;}
     <div class="crow" id="importSel"></div>
     <div id="importLbl" style="font-size:12px;min-height:18px;margin-bottom:8px;"></div>
     <div class="uz" id="uz" onclick="document.getElementById('csvIn').click()" ondragover="dov(event)" ondrop="dod(event)" ondragleave="dol()">
-      <div class="uz-ic">📄</div>
-      <div class="uz-t">點擊或拖曳 CSV 匯入菜單</div>
-      <div class="uz-s">格式：飲品名稱, M價格, 分類, 茶類選項, 冰熱選項, 加料, 甜度固定,取餐時間, L價格</div>
+      <div class="uz-ic">📄</div><div class="uz-t">點擊或拖曳 CSV 匯入菜單</div>
+      <div class="uz-s">格式：飲品名稱, M價格, 分類, 茶類選項, 冰熱選項, 加料, 甜度固定, L價格</div>
     </div>
     <input type="file" id="csvIn" accept=".csv,.txt" style="display:none" onchange="onCsv(event)">
     <div class="abox" id="csvBox"><div class="abox-t" id="csvTxt"></div></div>
     <div style="background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px;margin-top:6px;font-size:11px;color:var(--hint);font-family:monospace;line-height:1.9;">
-      飲品名稱,M價格,分類,加料選項,甜度固定,取餐時間,L價格<br>
-      厚哩青茶,30,沏茶,,,<br>
-      古釀冬瓜茶,30,沏茶,,甜度固定,<br>
-      厚哩奶茶,50,醇奶,波霸:10|椰果:10|QQ:10,,<br>
-      抹茶鮮奶,65,鮮奶,,,70
+      飲品名稱,M價格,分類,茶類選項,冰熱選項,加料選項,甜度固定,L價格<br>
+      厚哩青茶,30,沏茶,,,,,<br>
+      厚哩奶茶,50,醇奶,,,波霸:10|椰果:10|QQ:10,,<br>
+      抹茶鮮奶,65,鮮奶,,,,,70
     </div>
     <button class="bsm" style="margin-top:8px;font-size:12px;" onclick="dlTemplate()">⬇ 下載範本</button>
   </div>
@@ -263,72 +226,45 @@ button,input,select{font-family:inherit;}
       <input id="inp-dtea" placeholder="茶類選項(青茶|烏龍|紅茶)">
     </div>
     <div class="arow">
-      <input id="inp-dhot" placeholder="冰熱選項(熱|冰 或 熱 或留空)">
+      <input id="inp-dhot" placeholder="冰熱選項(正常|少冰|去冰|常溫|熱)">
       <input id="inp-dadd" placeholder="加料(波霸:10|椰果:10|奶蓋:33)">
-      <input id="inp-pickup" placeholder="取餐時間(上班拿|下班拿)">
-      <label style="font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap;">
-        <input type="checkbox" id="inp-dfx"> 甜度固定
-      </label>
+    </div>
+    <div class="arow">
+      <input id="inp-pickup" placeholder="取餐時間(上班拿|下班拿，無則留空)">
+      <label style="font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap;"><input type="checkbox" id="inp-dfx"> 甜度固定</label>
       <button class="bsm" onclick="addDrink()">新增</button>
     </div>
-    <div class="lbl">飲品列表</div>
-    <div id="drinkList"></div>
+    <div class="lbl">飲品列表</div><div id="drinkList"></div>
   </div>
-  <div class="asec">
-    <h3>📦 已儲存店家</h3>
-    <div id="shopList"></div>
-  </div>
+  <div class="asec"><h3>📦 已儲存店家</h3><div id="shopList"></div></div>
   <div class="asec">
     <h3>👥 部門與人員</h3>
     <div class="arow">
-      <select id="sel-dept" style="flex:1;padding:8px;border:1px solid var(--bd2);border-radius:var(--rs);font-size:13px;background:var(--sf);">
-        <option value="">選擇部門</option>
-      </select>
-      <input id="inp-mem" placeholder="人員姓名">
-      <button class="bsm" onclick="addMem()">新增</button>
+      <select id="sel-dept" style="flex:1;padding:8px;border:1px solid var(--bd2);border-radius:var(--rs);font-size:13px;background:var(--sf);"><option value="">選擇部門</option></select>
+      <input id="inp-mem" placeholder="人員姓名"><button class="bsm" onclick="addMem()">新增</button>
     </div>
-    <div class="arow">
-      <input id="inp-dept" placeholder="新增部門名稱">
-      <button class="bsm" onclick="addDept()">新增部門</button>
-    </div>
+    <div class="arow"><input id="inp-dept" placeholder="新增部門名稱"><button class="bsm" onclick="addDept()">新增部門</button></div>
     <div id="deptMgmt"></div>
   </div>
   <div class="asec">
     <h3>⚙️ 其他</h3>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="bsm" style="color:var(--r);border-color:#F09595;" onclick="clearToday()">🗑 清空今日訂單</button>
-    </div>
-    <div class="arow" style="margin-top:10px;">
-      <input id="inp-pwd" placeholder="新管理員密碼" type="password">
-      <button class="bsm" onclick="chPwd()">更新密碼</button>
-    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="bsm" style="color:var(--r);border-color:#F09595;" onclick="clearToday()">🗑 清空今日訂單</button></div>
+    <div class="arow" style="margin-top:10px;"><input id="inp-pwd" placeholder="新管理員密碼" type="password"><button class="bsm" onclick="chPwd()">更新密碼</button></div>
   </div>
 </div>
 
 <!-- 點餐選項 Modal -->
 <div class="mbg" id="orderModal">
-  <div class="modal">
-    <h3 id="omTitle"></h3>
-    <div id="omBody"></div>
-    <div class="mbtns">
-      <button onclick="closeOM()">取消</button>
-      <button class="ok" onclick="doAddDrink()">確定加入</button>
-    </div>
+  <div class="modal"><h3 id="omTitle"></h3><div id="omBody"></div>
+    <div class="mbtns"><button onclick="closeOM()">取消</button><button class="ok" onclick="doAddDrink()">確定加入</button></div>
   </div>
 </div>
-
 <!-- 排程 Modal -->
 <div class="mbg" id="schedModal">
-  <div class="modal">
-    <h3 id="smTitle"></h3>
-    <div id="smBody"></div>
-    <div class="mbtns">
-      <button onclick="closeSM()">取消</button>
-      <button class="ok" onclick="doSched()">確定</button>
-    </div>
+  <div class="modal"><h3 id="smTitle"></h3><div id="smBody"></div>
+    <div class="mbtns"><button onclick="closeSM()">取消</button><button class="ok" onclick="doSched()">確定</button></div>
   </div>
 </div>
-
 <!-- 確認送出 Modal -->
 <div class="mbg" id="confirmModal">
   <div class="modal">
@@ -341,13 +277,8 @@ button,input,select{font-family:inherit;}
     </div>
   </div>
 </div>
-
 <!-- 圖片放大 -->
-<div class="imgbg" id="imgModal" onclick="closeImg()">
-  <button class="imgclose">✕</button>
-  <img id="imgSrc" src="" alt="">
-</div>
-
+<div class="imgbg" id="imgModal" onclick="closeImg()"><button class="imgclose">✕</button><img id="imgSrc" src="" alt=""></div>
 <div class="loginbg" id="loginBg">
   <div class="loginbox">
     <h3>🔐 管理員登入</h3>
@@ -356,13 +287,11 @@ button,input,select{font-family:inherit;}
     <button onclick="document.getElementById('loginBg').classList.remove('on')" style="width:100%;margin-top:8px;background:none;border:none;color:var(--sub);font-size:13px;cursor:pointer;">取消</button>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 <button class="gear" onclick="document.getElementById('loginBg').classList.add('on');document.getElementById('pwdIn').focus()">⚙️</button>
 
 <script>
-/* ── Firebase ── */
-// Firebase 設定
+/* Firebase config */
 const _a=['AIzaSyDD20_XLJVRvVvTj','RBIRmOToREowrKtXuI'];
 const FB={
   apiKey:_a[0]+_a[1],
@@ -373,83 +302,37 @@ const FB={
   messagingSenderId:"555132314787",
   appId:"1:555132314787:web:6f9a2e1932bbaab2e7cb16"
 };
-const DAYS=['一','二','三','四','五','HPD'];
-const DKEYS=['mon','tue','wed','thu','fri','HPD'];
+const DAYS=['一','二','三','四','五'];
+const DKEYS=['mon','tue','wed','thu','fri'];
 const ICE=['去冰','微冰','少冰','正常冰'];
 const SUGAR=['無糖','1分糖','2分糖','微糖','半糖','少糖','全糖'];
 
-/* ── State ── */
-let db=null;
-let shops={}, sched={mon:null,tue:null,wed:null,thu:null,fri:null};
-let depts=[], orders={mon:{},tue:{},wed:{},thu:{},fri:{}}, locked={mon:{},tue:{},wed:{},thu:{},fri:{}};
+let db=null,shops={},sched={mon:null,tue:null,wed:null,thu:null,fri:null};
+let depts=[],orders={mon:{},tue:{},wed:{},thu:{},fri:{}},locked={mon:{},tue:{},wed:{},thu:{},fri:{}};
 let dayIdx=Math.min(Math.max(new Date().getDay()-1,0),4);
-let curMem=null, curCat='全部', isAdmin=false, editRid=null, importRid=null;
-let rSeq=100, iSeq=1000, dPush=false;
+let curMem=null,curCat='全部',isAdmin=false,editRid=null,importRid=null;
+let rSeq=100,iSeq=1000,dPush=false;
 
-/* ── Pending order ── */
-let PID=null, PSIZE='M', PICE='正常冰', PSUGAR='半糖', PADDON='', PTEA='', PHOT=false;
+/* Pending order state */
+let PID=null,PSIZE='M',PICE='去冰',PSUGAR='半糖',PADDON='',PTEA='',PPICKUP='';
 
-/* ── Firebase init ── */
 function initFB(){
   try{
-    firebase.initializeApp(FB);
-    db=firebase.database();
-    ss('s');
-    db.ref('drink_orders').on('value',snap=>{
-      const v=snap.val();
-      if(v) DKEYS.forEach(k=>{if(v[k])orders[k]=v[k];});
-      rAll();
-      if(document.getElementById('p-summary').classList.contains('on')) rSum();
-    });
-    db.ref('drink_shops').on('value',snap=>{
-      const v=snap.val();
-      if(v){
-        shops=v;
-        const mx=Object.keys(shops).map(k=>parseInt(k.replace('r',''))||0).reduce((a,b)=>Math.max(a,b),99);
-        rSeq=mx+1;
-      }
-      rAll();
-      if(isAdmin) rAdmin();
-    });
-    db.ref('drink_sched').on('value',snap=>{
-      const v=snap.val();
-      if(v) Object.assign(sched,v);
-      rAll();
-      if(isAdmin) rAdmin();
-    });
+    firebase.initializeApp(FB);db=firebase.database();ss('s');
+    db.ref('drink_orders').on('value',snap=>{const v=snap.val();if(v)DKEYS.forEach(k=>{if(v[k])orders[k]=v[k];});rAll();if(document.getElementById('p-summary').classList.contains('on'))rSum();});
+    db.ref('drink_shops').on('value',snap=>{const v=snap.val();if(v){shops=v;const mx=Object.keys(shops).map(k=>parseInt(k.replace('r',''))||0).reduce((a,b)=>Math.max(a,b),99);rSeq=mx+1;}rAll();if(isAdmin)rAdmin();});
+    db.ref('drink_sched').on('value',snap=>{const v=snap.val();if(v)Object.assign(sched,v);rAll();if(isAdmin)rAdmin();});
     db.ref('drink_depts').on('value',snap=>{
       if(dPush){dPush=false;return;}
       const v=snap.val();
-      if(v!=null){
-        let arr=Array.isArray(v)?v:Object.values(v);
-        depts=arr.filter(d=>d&&d.name).map(d=>({
-          name:d.name,
-          members:Array.isArray(d.members)?d.members:Object.values(d.members||{})
-        }));
-      }
-      rAll();
-      if(isAdmin) rAdmin();
+      if(v!=null){let arr=Array.isArray(v)?v:Object.values(v);depts=arr.filter(d=>d&&d.name).map(d=>({name:d.name,members:Array.isArray(d.members)?d.members:Object.values(d.members||{})}));}
+      rAll();if(isAdmin)rAdmin();
     });
-    db.ref('drink_locked').on('value',snap=>{
-      const v=snap.val();
-      if(v) DKEYS.forEach(k=>{if(v[k])locked[k]=v[k];});
-      rAll();
-    });
+    db.ref('drink_locked').on('value',snap=>{const v=snap.val();if(v)DKEYS.forEach(k=>{if(v[k])locked[k]=v[k];});rAll();});
     db.ref('.info/connected').on('value',snap=>{ss(snap.val()?'ok':'off');rAll();});
-  }catch(e){
-    console.error(e);
-    ss('off');
-    const b=document.getElementById('banner');
-    b.className='warn';
-    document.getElementById('bannerTxt').textContent='⚠️ Firebase 連線失敗';
-    rAll();
-  }
+  }catch(e){console.error(e);ss('off');document.getElementById('banner').className='warn';document.getElementById('bannerTxt').textContent='⚠️ Firebase 連線失敗';rAll();}
 }
-function ss(s){
-  document.getElementById('dot').className='dot'+(s==='s'?' s':s==='off'?' off':'');
-}
-
-/* ── Push ── */
+function ss(s){document.getElementById('dot').className='dot'+(s==='s'?' s':s==='off'?' off':'');}
 function pushO(){if(db){ss('s');db.ref('drink_orders/'+dk()).set(orders[dk()]||{}).then(()=>ss('ok')).catch(()=>ss('off'));}}
 function pushS(){if(db)db.ref('drink_shops').set(shops);}
 function pushSc(){if(db)db.ref('drink_sched').set(sched);}
@@ -457,64 +340,57 @@ function pushL(){if(db)db.ref('drink_locked/'+dk()).set(locked[dk()]||{});}
 function pushD(){
   if(!db){rAll();if(isAdmin)rAdmin();return;}
   dPush=true;
-  const obj={};
-  depts.forEach((d,i)=>{obj['d'+String(i).padStart(3,'0')]={name:d.name,members:d.members||[]};});
+  const obj={};depts.forEach((d,i)=>{obj['d'+String(i).padStart(3,'0')]={name:d.name,members:d.members||[]};});
   db.ref('drink_depts').set(obj).catch(()=>{dPush=false;});
   rAll();if(isAdmin)rAdmin();
 }
 
-/* ── Helpers ── */
 function dk(){return DKEYS[dayIdx];}
 function tShop(){const r=sched[dk()];return r?shops[r]:null;}
 function tRid(){return sched[dk()]||null;}
 function getPwd(){return localStorage.getItem('drinkPwd')||'1234';}
-function getOrd(dept,mem){
-  const r=tRid();if(!r)return{items:{}};
-  return orders[dk()]?.[r]?.[dept]?.[mem]||{items:{}};
-}
+function getOrd(dept,mem){const r=tRid();if(!r)return{items:{}};return orders[dk()]?.[r]?.[dept]?.[mem]||{items:{}};}
 function mutOrd(dept,mem,fn){
-  const r=tRid();if(!r)return;
-  const d=dk();
-  if(!orders[d])orders[d]={};
-  if(!orders[d][r])orders[d][r]={};
+  const r=tRid();if(!r)return;const d=dk();
+  if(!orders[d])orders[d]={};if(!orders[d][r])orders[d][r]={};
   if(!orders[d][r][dept])orders[d][r][dept]={};
   if(!orders[d][r][dept][mem])orders[d][r][dept][mem]={items:{}};
-  fn(orders[d][r][dept][mem]);
-  pushO();
+  fn(orders[d][r][dept][mem]);pushO();
 }
-/* Key: "id|size|ice|sugar|addon" */
-function mk(id,size,tea,ice,sugar,addon){return [String(id),size||'',tea||'',ice||'',sugar||'',addon||''].join('|');}
+
+/* Key format: "id|size|tea|ice|sugar|addon|pickup" */
+function mk(id,size,tea,ice,sugar,addon,pickup){
+  return [String(id),size||'',tea||'',ice||'',sugar||'',addon||'',pickup||''].join('|');
+}
 function pk(k){
   const p=k.split('|');
-  return{id:p[0]||'',size:p[1]||'',tea:p[2]||'',ice:p[3]||'',sugar:p[4]||'',addon:p[5]||''};
+  return{id:p[0]||'',size:p[1]||'',tea:p[2]||'',ice:p[3]||'',sugar:p[4]||'',addon:p[5]||'',pickup:p[6]||''};
 }
 function aN(a){return a.includes(':')?a.split(':')[0]:a;}
 function aP(a){return a.includes(':')?parseInt(a.split(':')[1])||10:10;}
 function gPrice(item,size,addon){
   let p=(size==='L'&&item.priceL)?item.priceL:item.price;
-  if(addon) p+=aP(addon);
+  if(addon)p+=aP(addon);
   return p;
 }
-function lbl(item,size,tea,ice,sugar,addon){
+function lbl(item,size,tea,ice,sugar,addon,pickup){
   let s=item.name;
-  if(size&&item.priceL) s+=' ('+size+')';
-  if(tea) s+=' | '+tea;
-  if(ice==='熱飲') s+=' | ☕熱飲';
-  else if(ice) s+=' | '+ice;
-  if(item.fixedSugar) s+=' | 甜度固定';
-  else if(sugar) s+=' | '+sugar;
-  if(addon) s+=' | +'+aN(addon);
+  if(size&&item.priceL)s+=' ('+size+')';
+  if(tea)s+=' | '+tea;
+  if(ice==='熱飲')s+=' | ☕熱飲';
+  else if(ice)s+=' | '+ice;
+  if(item.fixedSugar)s+=' | 甜度固定';
+  else if(sugar)s+=' | '+sugar;
+  if(addon)s+=' | +'+aN(addon);
+  if(pickup)s+=' | 🕐'+pickup;
   return s;
 }
-function findItem(rid,id){
-  return((shops[rid]||{}).items||[]).find(i=>String(i.id)===String(id));
-}
+function findItem(rid,id){return((shops[rid]||{}).items||[]).find(i=>String(i.id)===String(id));}
 function mTotal(dept,mem){
   const r=tRid();if(!r)return 0;
   const o=getOrd(dept,mem);
   return Object.keys(o.items||{}).reduce((s,k)=>{
-    const {id,size,tea,ice,sugar,addon}=pk(k);
-    const it=findItem(r,id);
+    const{id,size,addon}=pk(k);const it=findItem(r,id);
     return s+(it?gPrice(it,size,addon)*(o.items[k]||0):0);
   },0);
 }
@@ -522,17 +398,12 @@ function isLk(d,m){return !!(locked[dk()]&&locked[dk()][d+'__'+m]);}
 function lock(d,m){if(!locked[dk()])locked[dk()]={};locked[dk()][d+'__'+m]=true;pushL();}
 function unlock(d,m){if(locked[dk()])delete locked[dk()][d+'__'+m];pushL();}
 
-/* ── Render ── */
 function rAll(){rWeek();rShop();rDepts();rCat();rDrinks();rHdr();}
-function rHdr(){
-  let t=0;depts.forEach(d=>d.members.forEach(m=>t+=mTotal(d.name,m)));
-  document.getElementById('hamt').textContent='NT$'+t;
-}
+function rHdr(){let t=0;depts.forEach(d=>d.members.forEach(m=>t+=mTotal(d.name,m)));document.getElementById('hamt').textContent='NT$'+t;}
 function rWeek(){
   const el=document.getElementById('wrow');if(!el)return;
   el.innerHTML=DKEYS.map((k,i)=>{
-    const r=sched[k];
-    const has=r&&orders[k]&&orders[k][r]&&Object.keys(orders[k][r]).length>0;
+    const r=sched[k];const has=r&&orders[k]&&orders[k][r]&&Object.keys(orders[k][r]).length>0;
     return `<div class="wd${i===dayIdx?' on':''}${has?' has':''}" onclick="swDay(${i})">週${DAYS[i]}</div>`;
   }).join('');
 }
@@ -541,11 +412,7 @@ function rShop(){
   const r=tShop(),el=document.getElementById('shopInfo');
   if(!r){el.innerHTML='<div style="font-size:13px;color:var(--hint);padding:6px 0;">今日尚未設定飲料店</div>';return;}
   const imgs=(r.images||[]).map(url=>`<img src="${url}" onclick="openImg('${url}')">`).join('');
-  el.innerHTML=`<div class="sbar">
-    <div class="sname">${r.name}</div>
-    <div class="ssub">今日店家 · 週${DAYS[dayIdx]}</div>
-    ${imgs?`<div class="simgs">${imgs}</div>`:''}
-  </div>`;
+  el.innerHTML=`<div class="sbar"><div class="sname">${r.name}</div><div class="ssub">今日店家 · 週${DAYS[dayIdx]}</div>${imgs?`<div class="simgs">${imgs}</div>`:''}</div>`;
 }
 function rDepts(){
   const el=document.getElementById('deptArea');
@@ -554,20 +421,12 @@ function rDepts(){
     const dt=d.members.reduce((s,m)=>s+mTotal(d.name,m),0);
     const mh=d.members.map(m=>{
       const act=curMem&&curMem.d===d.name&&curMem.m===m;
-      const t=mTotal(d.name,m);
-      const has=Object.keys(getOrd(d.name,m).items||{}).length>0;
-      if(isLk(d.name,m)) return `<div class="mc lk">${m}<span class="lkb">✓已送出</span></div>`;
+      const t=mTotal(d.name,m);const has=Object.keys(getOrd(d.name,m).items||{}).length>0;
+      if(isLk(d.name,m))return `<div class="mc lk">${m}<span class="lkb">✓已送出</span></div>`;
       return `<span class="mc${act?' on':''}" data-d="${d.name}" data-m="${m}">${m}${has?`<span class="mc-s">NT$${t}</span>`:''}</span>`;
     }).join('');
-    return `<div class="db">
-      <div class="dh" onclick="togD(${di})">
-        <div style="display:flex;align-items:center;"><span class="dn">${d.name}</span><span class="dc">${d.members.length}人</span></div>
-        <span class="dt">${dt>0?'NT$'+dt:''}</span>
-      </div>
-      <div class="dm" id="dm${di}">${mh}</div>
-    </div>`;
+    return `<div class="db"><div class="dh" onclick="togD(${di})"><div style="display:flex;align-items:center;"><span class="dn">${d.name}</span><span class="dc">${d.members.length}人</span></div><span class="dt">${dt>0?'NT$'+dt:''}</span></div><div class="dm" id="dm${di}">${mh}</div></div>`;
   }).join('');
-  // Attach click events via delegation to avoid quote escaping issues
   document.querySelectorAll('.mc[data-m]').forEach(el=>{
     el.addEventListener('click',function(){
       const d=this.dataset.d,m=this.dataset.m;
@@ -577,10 +436,8 @@ function rDepts(){
   });
 }
 function togD(i){const el=document.getElementById('dm'+i);el.style.display=el.style.display==='none'?'':'none';}
-
 function rCat(){
-  const r=tShop();
-  const cats=['全部',...new Set((r?.items||[]).map(i=>i.cat))];
+  const r=tShop();const cats=['全部',...new Set((r?.items||[]).map(i=>i.cat))];
   document.getElementById('catBar').innerHTML=cats.map(c=>`<button class="cb${c===curCat?' on':''}" onclick="selCat('${c}')">${c}</button>`).join('');
 }
 function selCat(c){curCat=c;rCat();rDrinks();}
@@ -588,23 +445,14 @@ function selCat(c){curCat=c;rCat();rDrinks();}
 function rDrinks(){
   const r=tShop(),grid=document.getElementById('drinkGrid');
   if(!r){grid.innerHTML='';return;}
-  if(!curMem){
-    grid.innerHTML='<div style="grid-column:1/-1;padding:16px;font-size:13px;color:var(--hint);">請先在上方選擇你的名字</div>';
-    return;
-  }
+  if(!curMem){grid.innerHTML='<div style="grid-column:1/-1;padding:16px;font-size:13px;color:var(--hint);">請先在上方選擇你的名字</div>';return;}
   if(isLk(curMem.d,curMem.m)){
-    grid.innerHTML=`<div style="grid-column:1/-1;padding:20px;text-align:center;">
-      <div style="font-size:36px;margin-bottom:8px;">✅</div>
-      <div style="font-size:15px;font-weight:700;color:var(--g);margin-bottom:4px;">${curMem.m} 的訂單已送出</div>
-      <div style="font-size:13px;color:var(--sub);margin-bottom:14px;">NT$${mTotal(curMem.d,curMem.m)}</div>
-      ${isAdmin?`<button class="bsm" style="color:var(--r);border-color:#F09595;" onclick="unlock('${curMem.d}','${curMem.m}');rDrinks();">管理員解鎖</button>`:''}
-    </div>`;
+    grid.innerHTML=`<div style="grid-column:1/-1;padding:20px;text-align:center;"><div style="font-size:36px;margin-bottom:8px;">✅</div><div style="font-size:15px;font-weight:700;color:var(--g);margin-bottom:4px;">${curMem.m} 的訂單已送出</div><div style="font-size:13px;color:var(--sub);margin-bottom:14px;">NT$${mTotal(curMem.d,curMem.m)}</div>${isAdmin?`<button class="bsm" style="color:var(--r);border-color:#F09595;" onclick="unlock('${curMem.d}','${curMem.m}');rDrinks();">管理員解鎖</button>`:''}</div>`;
     return;
   }
   const items=curCat==='全部'?r.items:r.items.filter(i=>i.cat===curCat);
   const o=getOrd(curMem.d,curMem.m);
   const rid=tRid(),ro2=orders[dk()]?.[rid]||{};
-  // Count totals
   const totByItem={};
   depts.forEach(dep=>dep.members.forEach(mem=>{
     const mo=ro2[dep.name]?.[mem]?.items||{};
@@ -617,65 +465,35 @@ function rDrinks(){
     const sid=String(item.id);
     const tq=totByItem[sid]||0,mq=myByItem[sid]||0;
     const myKeys=Object.keys(o.items||{}).filter(k=>pk(k).id===sid);
-    // Price display
     const priceHtml=item.priceL
       ?`<div class="prow"><span class="psz">M</span><span class="pval">NT$${item.price}</span><span class="psep">·</span><span class="psz">L</span><span class="pval">NT$${item.priceL}</span></div>`
       :`<div class="prow"><span class="pval">NT$${item.price}</span></div>`;
-    // Addon display
     const teaHtml=(item.tea&&item.tea.length)?`<div class="addo">茶類：${item.tea.join(' / ')}</div>`:'';
-    const hotHtml=(item.hotOptions&&item.hotOptions.length)?`<div class="addo">溫度：${item.hotOptions.slice(0,3).join(' / ')}${item.hotOptions.length>3?'...':''}</div>`:'';
-    const addHtml=(item.addon&&item.addon.length)
-      ?`<div class="addo">加料：${item.addon.map(a=>aN(a)+'+'+aP(a)+'元').join(' / ')}</div>`:'';
-    // Order rows
+    const hotHtml=(item.hotOptions&&item.hotOptions.length)?`<div class="addo">溫度：${item.hotOptions.slice(0,4).join(' / ')}${item.hotOptions.length>4?'...':''}</div>`:'';
+    const pickupHtml=(item.pickupOptions&&item.pickupOptions.length)?`<div class="addo">🕐 取餐：${item.pickupOptions.join(' / ')}</div>`:'';
+    const addHtml=(item.addon&&item.addon.length)?`<div class="addo">加料：${item.addon.map(a=>aN(a)+'+'+aP(a)+'元').join(' / ')}</div>`:'';
     const oRows=myKeys.map(k=>{
-      const {size,tea,ice,sugar,addon}=pk(k),qty=o.items[k];
-      const tag=lbl(item,size,tea,ice,sugar,addon);
-      return `<div class="orow-card">
-        <span class="otag">${tag}</span>
-        <div class="qctrl">
-          <button class="qb" data-key="${k}" data-d="-1">−</button>
-          <span style="font-size:12px;font-weight:700;min-width:16px;text-align:center;">${qty}</span>
-          <button class="qb" data-key="${k}" data-d="1">+</button>
-        </div>
-      </div>`;
+      const{size,tea,ice,sugar,addon,pickup}=pk(k),qty=o.items[k];
+      const tag=lbl(item,size,tea,ice,sugar,addon,pickup);
+      return `<div class="orow-card"><span class="otag">${tag}</span><div class="qctrl"><button class="qb" data-key="${k}" data-d="-1">−</button><span style="font-size:12px;font-weight:700;min-width:16px;text-align:center;">${qty}</span><button class="qb" data-key="${k}" data-d="1">+</button></div></div>`;
     }).join('');
-    return `<div class="dcard${mq>0?' sel':''}" data-id="${sid}">
-      ${tq>0?`<div class="qbg">${tq}</div>`:''}
-      <div class="ctag">${item.cat}</div>
-      <div class="dname">${item.name}</div>
-      ${priceHtml}
-      ${item.fixedSugar?'<div class="fixd">甜度固定</div>':''}
-      ${teaHtml}${hotHtml}${addHtml}
-      ${oRows}
-    </div>`;
+    return `<div class="dcard${mq>0?' sel':''}" data-id="${sid}">${tq>0?`<div class="qbg">${tq}</div>`:''}<div class="ctag">${item.cat}</div><div class="dname">${item.name}</div>${priceHtml}${item.fixedSugar?'<div class="fixd">甜度固定</div>':''}${teaHtml}${hotHtml}${pickupHtml}${addHtml}${oRows}</div>`;
   }).join('');
 
-  // Events via delegation - no inline onclick
   grid.querySelectorAll('.dcard').forEach(card=>{
-    card.addEventListener('click',function(e){
-      if(e.target.closest('.qb')) return; // handled below
-      openOM(this.dataset.id);
-    });
+    card.addEventListener('click',function(e){if(e.target.closest('.qb'))return;openOM(this.dataset.id);});
   });
   grid.querySelectorAll('.qb').forEach(btn=>{
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();
-      doQty(this.dataset.key, parseInt(this.dataset.d));
-    });
+    btn.addEventListener('click',function(e){e.stopPropagation();doQty(this.dataset.key,parseInt(this.dataset.d));});
   });
 
-  // Confirm button
   const myTotal=mTotal(curMem.d,curMem.m);
   const hasItems=Object.keys(o.items||{}).some(k=>o.items[k]>0);
   if(hasItems){
-    const div=document.createElement('div');
-    div.style.cssText='grid-column:1/-1;margin-top:4px;';
-    const btn=document.createElement('button');
-    btn.className='btnok';
-    btn.textContent='✓ 確認送出（NT$'+myTotal+'）';
-    btn.onclick=doConfirm;
-    div.appendChild(btn);
-    grid.appendChild(div);
+    const div=document.createElement('div');div.style.cssText='grid-column:1/-1;margin-top:4px;';
+    const btn=document.createElement('button');btn.className='btnok';
+    btn.textContent='✓ 確認送出（NT$'+myTotal+'）';btn.onclick=doConfirm;
+    div.appendChild(btn);grid.appendChild(div);
   }
 }
 
@@ -684,63 +502,46 @@ function openOM(id){
   const r=tShop();
   const item=(r?.items||[]).find(i=>String(i.id)===String(id));
   if(!item){toast('找不到飲品');return;}
-  PID=id;
-  PSIZE=item.priceL?'M':'';
-  PICE='正常冰';
-  PSUGAR=item.fixedSugar?'甜度固定':'半糖';
-  PADDON='';
+  PID=id;PSIZE=item.priceL?'M':'';PSUGAR=item.fixedSugar?'甜度固定':'半糖';PADDON='';
   PTEA=item.tea&&item.tea.length?item.tea[0]:'';
-  // 溫度：預設第一個選項，或正常冰
-  // 預設選「去冰」，沒有去冰就選第一個
-  if(item.hotOptions&&item.hotOptions.length){
-    PICE=item.hotOptions.includes('去冰')?'去冰':item.hotOptions[0];
-  } else {
-    PICE='去冰';
-  }
-  PHOT=false;
-  renderOM(item);
-  document.getElementById('orderModal').classList.add('on');
+  PPICKUP=item.pickupOptions&&item.pickupOptions.length?item.pickupOptions[0]:'';
+  if(item.hotOptions&&item.hotOptions.length){PICE=item.hotOptions.includes('去冰')?'去冰':item.hotOptions[0];}
+  else{PICE='去冰';}
+  renderOM(item);document.getElementById('orderModal').classList.add('on');
 }
 function renderOM(item){
   const priceNow=(PSIZE==='L'&&item.priceL)?item.priceL:item.price;
   document.getElementById('omTitle').textContent=item.name+' — NT$'+priceNow;
   let h='';
-
-  // 📏 杯型
   if(item.priceL){
     h+=`<div class="osec"><div class="olbl">📏 杯型</div><div class="obts">
       <button class="obt${PSIZE==='M'?' on':''}" onclick="setPsize('M')">M 中杯 NT$${item.price}</button>
       <button class="obt${PSIZE==='L'?' on':''}" onclick="setPsize('L')">L 大杯 NT$${item.priceL}</button>
     </div></div>`;
   }
-
-  // 🍃 茶類選項
   if(item.tea&&item.tea.length>0){
     h+=`<div class="osec"><div class="olbl">🍃 茶類</div><div class="obts">
       ${item.tea.map(t=>`<button class="obt${PTEA===t?' on':''}" onclick="setPtea('${t}')">${t}</button>`).join('')}
     </div></div>`;
   }
-
-  // 🌡️ 溫度選項
   if(item.hotOptions&&item.hotOptions.length>0){
-    // 欄E有設定：直接顯示所有選項
     h+=`<div class="osec"><div class="olbl">🌡️ 溫度</div><div class="obts">
       ${item.hotOptions.map(v=>`<button class="obt${PICE===v?' on':''}" onclick="setPice('${v}')">${v}</button>`).join('')}
     </div></div>`;
-  } else {
-    // 欄E空白：顯示預設冰塊選項
+  }else{
     h+=`<div class="osec"><div class="olbl">🧊 冰塊</div><div class="obts">
       ${ICE.map(v=>`<button class="obt${PICE===v?' on':''}" onclick="setPice('${v}')">${v}</button>`).join('')}
     </div></div>`;
   }
-
-  // 🍬 糖度
   h+=`<div class="osec"><div class="olbl">🍬 糖度</div>`;
   if(item.fixedSugar){h+=`<div style="font-size:12px;color:var(--a);padding:4px 0;">甜度固定，無法更改</div>`;}
   else{h+=`<div class="obts">${SUGAR.map(v=>`<button class="obt${PSUGAR===v?' on':''}" onclick="setPsugar('${v}')">${v}</button>`).join('')}</div>`;}
   h+=`</div>`;
-
-  // ➕ 加料
+  if(item.pickupOptions&&item.pickupOptions.length>0){
+    h+=`<div class="osec"><div class="olbl">🕐 取餐時間</div><div class="obts">
+      ${item.pickupOptions.map(v=>`<button class="obt${PPICKUP===v?' on':''}" onclick="setPpickup('${v}')">${v}</button>`).join('')}
+    </div></div>`;
+  }
   if(item.addon&&item.addon.length){
     h+=`<div class="osec"><div class="olbl">➕ 加料</div><div class="obts">
       ${item.addon.map(a=>`<button class="obt${PADDON===a?' on':''}" onclick="setPaddon('${a}')">${aN(a)} <span style="font-size:10px;opacity:.75;">+${aP(a)}元</span></button>`).join('')}
@@ -749,23 +550,15 @@ function renderOM(item){
   }
   document.getElementById('omBody').innerHTML=h;
 }
-function setOpt(key,val,btn,fn){
-  // Update state
-  fn(val);
-  // Re-render modal with current item
-  const r=tShop();
-  if(!r||PID===null) return;
-  const item=(r.items||[]).find(i=>String(i.id)===String(PID));
-  if(item) renderOM(item);
-}
 function rOM(){const r=tShop();if(r&&PID!==null){const it=(r.items||[]).find(i=>String(i.id)===String(PID));if(it)renderOM(it);}}
 function setPsize(v){PSIZE=v;rOM();}
 function setPtea(v){PTEA=v;rOM();}
-function setPhot(v){PHOT=v;if(v){PICE='熱飲';}else{PICE='正常冰';}rOM();}
 function setPice(v){PICE=v;rOM();}
 function setPsugar(v){PSUGAR=v;rOM();}
 function setPaddon(v){PADDON=v;rOM();}
+function setPpickup(v){PPICKUP=v;rOM();}
 function closeOM(){document.getElementById('orderModal').classList.remove('on');PID=null;}
+
 function doAddDrink(){
   if(PID===null){toast('請重新選擇飲品');return;}
   if(!curMem){toast('請先選擇名字');closeOM();return;}
@@ -774,71 +567,58 @@ function doAddDrink(){
   if(!item){toast('找不到飲品');closeOM();return;}
   const sugar=item.fixedSugar?'甜度固定':PSUGAR;
   const size=item.priceL?PSIZE:'';
-  const tea=PTEA||'';
-  const ice=PHOT?'熱飲':PICE;
-  const k=mk(PID,size,tea,ice,sugar,PADDON);
+  const k=mk(PID,size,PTEA||'',PICE,sugar,PADDON,PPICKUP||'');
   const savedName=item.name;
-  document.getElementById('orderModal').classList.remove('on');
-  PID=null;
+  document.getElementById('orderModal').classList.remove('on');PID=null;
   mutOrd(curMem.d,curMem.m,o=>{if(!o.items)o.items={};o.items[k]=(o.items[k]||0)+1;});
-  rDepts();rDrinks();rHdr();
-  toast('已加入：'+savedName);
+  rDepts();rDrinks();rHdr();toast('已加入：'+savedName);
 }
 function doQty(key,delta){
-  if(!curMem) return;
-  mutOrd(curMem.d,curMem.m,o=>{
-    const nv=Math.max(0,(o.items[key]||0)+delta);
-    if(nv===0) delete o.items[key]; else o.items[key]=nv;
-  });
+  if(!curMem)return;
+  mutOrd(curMem.d,curMem.m,o=>{const nv=Math.max(0,(o.items[key]||0)+delta);if(nv===0)delete o.items[key];else o.items[key]=nv;});
   rDepts();rDrinks();rHdr();
 }
+
 let _confirmMem=null;
 function doConfirm(){
   if(!curMem){toast('錯誤：未選名字');return;}
   const o=getOrd(curMem.d,curMem.m);
   if(!Object.keys(o.items||{}).length){toast('請先選擇飲料');return;}
   const total=mTotal(curMem.d,curMem.m);
-  _confirmMem={d:curMem.d,m:curMem.m}; // 深複製備份
+  _confirmMem={d:curMem.d,m:curMem.m};
   document.getElementById('cmTitle').textContent=_confirmMem.m+' 確認送出訂單？';
   document.getElementById('cmBody').textContent='合計：NT$'+total;
   document.getElementById('confirmModal').classList.add('on');
 }
 function doConfirmOK(){
   document.getElementById('confirmModal').classList.remove('on');
-  const mem=_confirmMem||curMem;
-  _confirmMem=null;
+  const mem=_confirmMem||curMem;_confirmMem=null;
   if(!mem){toast('錯誤：找不到訂單人員，請重新點餐');return;}
-  curMem=null;
-  lock(mem.d,mem.m);
-  rAll();
+  curMem=null;lock(mem.d,mem.m);rAll();
   toast('✅ '+mem.m+' 訂單已送出！');
 }
 
-/* ── Summary ── */
 function rSum(){
   const r=tShop();let gT=0,gC=0,dh='';
   depts.forEach(dep=>{
     let dt=0,pr='';
     dep.members.forEach(m=>{
-      let mt=0,mi=[];
-      const o=getOrd(dep.name,m);
+      let mt=0,mi=[];const o=getOrd(dep.name,m);
       Object.keys(o.items||{}).forEach(k=>{
-        const {id,size,tea,ice,sugar,addon}=pk(k);
-        const it=findItem(tRid(),id);
-        if(it){const s=gPrice(it,size,addon)*(o.items[k]||0);mt+=s;dt+=s;gT+=s;gC+=(o.items[k]||0);mi.push(lbl(it,size,tea,ice,sugar,addon)+' ×'+(o.items[k]||0));}
+        const{id,size,tea,ice,sugar,addon,pickup}=pk(k);const it=findItem(tRid(),id);
+        if(it){const s=gPrice(it,size,addon)*(o.items[k]||0);mt+=s;dt+=s;gT+=s;gC+=(o.items[k]||0);mi.push(lbl(it,size,tea,ice,sugar,addon,pickup)+' ×'+(o.items[k]||0));}
       });
-      if(mi.length) pr+=`<div class="sper"><span class="spn">${m}</span><span class="spi">${mi.join('　')}</span><span class="spa">NT$${mt}</span></div>`;
+      if(mi.length)pr+=`<div class="sper"><span class="spn">${m}</span><span class="spi">${mi.join('　')}</span><span class="spa">NT$${mt}</span></div>`;
     });
-    if(pr) dh+=`<div class="sdept"><div class="sdh"><span class="sdt">${dep.name}</span><span class="sda">NT$${dt}</span></div>${pr}</div>`;
+    if(pr)dh+=`<div class="sdept"><div class="sdh"><span class="sdt">${dep.name}</span><span class="sda">NT$${dt}</span></div>${pr}</div>`;
   });
   document.getElementById('sumDept').innerHTML=dh||'<div class="empty">尚無訂單</div>';
   const all={};
   depts.forEach(dep=>dep.members.forEach(m=>{
     const o=getOrd(dep.name,m);
     Object.keys(o.items||{}).forEach(k=>{
-      const {id,size,tea,ice,sugar,addon}=pk(k);
-      const it=findItem(tRid(),id);
-      if(it){const lb=lbl(it,size,tea,ice,sugar,addon);if(!all[lb])all[lb]={p:gPrice(it,size,addon),q:0};all[lb].q+=(o.items[k]||0);}
+      const{id,size,tea,ice,sugar,addon,pickup}=pk(k);const it=findItem(tRid(),id);
+      if(it){const lb=lbl(it,size,tea,ice,sugar,addon,pickup);if(!all[lb])all[lb]={p:gPrice(it,size,addon),q:0};all[lb].q+=(o.items[k]||0);}
     });
   }));
   const ents=Object.entries(all).sort((a,b)=>a[0].localeCompare(b[0],'zh-Hant'));
@@ -855,8 +635,8 @@ function doCopy(){
     let dl=[];dep.members.forEach(m=>{
       let mi=[],mt=0;const o=getOrd(dep.name,m);
       Object.keys(o.items||{}).forEach(k=>{
-        const {id,size,tea,ice,sugar,addon}=pk(k);const it=findItem(tRid(),id);
-        if(it){mt+=gPrice(it,size,addon)*(o.items[k]||0);cnt+=(o.items[k]||0);mi.push(lbl(it,size,tea,ice,sugar,addon)+' ×'+(o.items[k]||0));}
+        const{id,size,tea,ice,sugar,addon,pickup}=pk(k);const it=findItem(tRid(),id);
+        if(it){mt+=gPrice(it,size,addon)*(o.items[k]||0);cnt+=(o.items[k]||0);mi.push(lbl(it,size,tea,ice,sugar,addon,pickup)+' ×'+(o.items[k]||0));}
       });
       if(mi.length){tot+=mt;dl.push('  '+m+'：'+mi.join('、')+'（NT$'+mt+'）');}
     });
@@ -866,8 +646,8 @@ function doCopy(){
   depts.forEach(dep=>dep.members.forEach(m=>{
     const o=getOrd(dep.name,m);
     Object.keys(o.items||{}).forEach(k=>{
-      const {id,size,tea,ice,sugar,addon}=pk(k);const it=findItem(tRid(),id);
-      if(it){const lb=lbl(it,size,tea,ice,sugar,addon);if(!allC[lb])allC[lb]={q:0,p:gPrice(it,size,addon)};allC[lb].q+=(o.items[k]||0);}
+      const{id,size,tea,ice,sugar,addon,pickup}=pk(k);const it=findItem(tRid(),id);
+      if(it){const lb=lbl(it,size,tea,ice,sugar,addon,pickup);if(!allC[lb])allC[lb]={q:0,p:gPrice(it,size,addon)};allC[lb].q+=(o.items[k]||0);}
     });
   }));
   lines.push('─'.repeat(22),'【彙整清單】');
@@ -876,95 +656,40 @@ function doCopy(){
   navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('已複製！'));
 }
 
-/* ── Admin ── */
 function rAdmin(){
-  if(!isAdmin) return;
-  const rids=Object.keys(shops);
-  // Import selector
+  if(!isAdmin)return;const rids=Object.keys(shops);
   const isel=document.getElementById('importSel');
   isel.innerHTML=rids.length?rids.map(r=>`<div class="chip${r===importRid?' on':''}" onclick="selImport('${r}')">${shops[r].name}</div>`).join(''):'<span style="font-size:12px;color:var(--hint)">尚無店家</span>';
   const ilbl=document.getElementById('importLbl');
   ilbl.textContent=importRid&&shops[importRid]?'目前選擇：'+shops[importRid].name:'← 請先點選上方店家';
   ilbl.style.color=importRid?'var(--g)':'var(--r)';
-  // Schedule
   const sg=document.getElementById('schedGrid');
-  sg.innerHTML=DKEYS.map((k,i)=>{
-    const rid=sched[k],name=rid&&shops[rid]?shops[rid].name:'未設定';
-    return `<div onclick="openSM(${i})" style="background:${rid?'var(--gl)':'var(--sf2)'};border:1.5px solid ${rid?'var(--g)':'var(--bd2)'};border-radius:var(--rs);padding:8px 5px;text-align:center;cursor:pointer;">
-      <div style="font-size:10px;color:var(--sub)">週${DAYS[i]}</div>
-      <div style="font-size:11px;font-weight:600;color:${rid?'var(--gd)':'var(--hint)'};margin-top:2px">${name.substring(0,5)}</div>
-    </div>`;
-  }).join('');
-  // Edit section
+  sg.innerHTML=DKEYS.map((k,i)=>{const rid=sched[k],name=rid&&shops[rid]?shops[rid].name:'未設定';return `<div onclick="openSM(${i})" style="background:${rid?'var(--gl)':'var(--sf2)'};border:1.5px solid ${rid?'var(--g)':'var(--bd2)'};border-radius:var(--rs);padding:8px 5px;text-align:center;cursor:pointer;"><div style="font-size:10px;color:var(--sub)">週${DAYS[i]}</div><div style="font-size:11px;font-weight:600;color:${rid?'var(--gd)':'var(--hint)'};margin-top:2px">${name.substring(0,5)}</div></div>`;}).join('');
   const es=document.getElementById('editSec');
   if(editRid&&shops[editRid]){
-    es.style.display='block';
-    document.getElementById('editLbl').textContent=shops[editRid].name;
+    es.style.display='block';document.getElementById('editLbl').textContent=shops[editRid].name;
     const items=shops[editRid].items||[];
-    const cats=[...new Set(items.map(i=>i.cat))];
-    document.getElementById('inp-dcat').placeholder='分類';
-    document.getElementById('drinkList').innerHTML=items.map((it,idx)=>`
-      <div class="dtag">${it.name} NT$${it.price}${it.priceL?'/'+it.priceL:''}(${it.cat})${it.fixedSugar?'[甜度固定]':''}
-        <button onclick="delDrink('${editRid}',${idx})">×</button>
-      </div>`).join('');
+    document.getElementById('drinkList').innerHTML=items.map((it,idx)=>`<div class="dtag">${it.name} NT$${it.price}${it.priceL?'/'+it.priceL:''}(${it.cat})${it.fixedSugar?'[甜度固定]':''}${it.pickupOptions?'[🕐'+it.pickupOptions.join('/')+']':''}<button onclick="delDrink('${editRid}',${idx})">×</button></div>`).join('');
     const imgs=shops[editRid].images||[];
-    document.getElementById('imgList').innerHTML=imgs.map((url,i)=>`
-      <div style="position:relative;">
-        <img src="${url}" style="height:68px;border-radius:8px;object-fit:cover;cursor:pointer;" onclick="openImg('${url}')">
-        <button onclick="delImg('${editRid}',${i})" style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:var(--r);color:#fff;border:none;cursor:pointer;font-size:11px;line-height:18px;padding:0;text-align:center;">×</button>
-      </div>`).join('');
+    document.getElementById('imgList').innerHTML=imgs.map((url,i)=>`<div style="position:relative;"><img src="${url}" style="height:68px;border-radius:8px;object-fit:cover;cursor:pointer;" onclick="openImg('${url}')"><button onclick="delImg('${editRid}',${i})" style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:var(--r);color:#fff;border:none;cursor:pointer;font-size:11px;line-height:18px;padding:0;text-align:center;">×</button></div>`).join('');
   }else{es.style.display='none';}
-  // Shop list
-  document.getElementById('shopList').innerHTML=rids.length
-    ?`<div class="crow">`+rids.map(r=>`<div class="chip${editRid===r?' on':''}" onclick="selEdit('${r}')" style="display:inline-flex;align-items:center;gap:5px;">✎ ${shops[r].name}<button onclick="delShop('${r}',event)" style="border:none;background:none;cursor:pointer;color:var(--r);font-size:13px;padding:0;line-height:1;">×</button></div>`).join('')+'</div>'
-    :'<div style="font-size:13px;color:var(--hint)">尚無店家</div>';
-  // Dept
+  document.getElementById('shopList').innerHTML=rids.length?`<div class="crow">`+rids.map(r=>`<div class="chip${editRid===r?' on':''}" onclick="selEdit('${r}')" style="display:inline-flex;align-items:center;gap:5px;">✎ ${shops[r].name}<button onclick="delShop('${r}',event)" style="border:none;background:none;cursor:pointer;color:var(--r);font-size:13px;padding:0;line-height:1;">×</button></div>`).join('')+'</div>':'<div style="font-size:13px;color:var(--hint)">尚無店家</div>';
   const ds=document.getElementById('sel-dept');
   ds.innerHTML='<option value="">選擇部門</option>'+depts.map(d=>`<option>${d.name}</option>`).join('');
-  document.getElementById('deptMgmt').innerHTML=depts.map(d=>`
-    <div style="margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-        <span style="font-size:13px;font-weight:600">${d.name}</span>
-        <button onclick="delDept('${d.name}')" style="font-size:11px;color:var(--r);border:none;background:none;cursor:pointer;">刪除</button>
-      </div>
-      <div class="crow">${(d.members||[]).map(m=>`<div class="dtag">${m}<button onclick="delMem('${d.name}','${m}')">×</button></div>`).join('')}</div>
-    </div>`).join('');
+  document.getElementById('deptMgmt').innerHTML=depts.map(d=>`<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:13px;font-weight:600">${d.name}</span><button onclick="delDept('${d.name}')" style="font-size:11px;color:var(--r);border:none;background:none;cursor:pointer;">刪除</button></div><div class="crow">${(d.members||[]).map(m=>`<div class="dtag">${m}<button onclick="delMem('${d.name}','${m}')">×</button></div>`).join('')}</div></div>`).join('');
 }
 function selImport(r){importRid=r;rAdmin();}
 function selEdit(r){editRid=r;rAdmin();document.getElementById('editSec').scrollIntoView({behavior:'smooth'});}
-function addShop(){
-  const name=document.getElementById('inp-shop').value.trim();
-  if(!name){toast('請輸入店家名稱');return;}
-  const rid='r'+rSeq++;
-  shops[rid]={id:rid,name,items:[],images:[]};
-  pushS();document.getElementById('inp-shop').value='';toast('已建立：'+name);rAdmin();
-}
-function delShop(rid,e){
-  e.stopPropagation();
-  if(!confirm('刪除「'+shops[rid]?.name+'」？')) return;
-  delete shops[rid];DKEYS.forEach(k=>{if(sched[k]===rid)sched[k]=null;});
-  pushS();pushSc();if(editRid===rid)editRid=null;if(importRid===rid)importRid=null;
-  rAll();rAdmin();
-}
+function addShop(){const name=document.getElementById('inp-shop').value.trim();if(!name){toast('請輸入店家名稱');return;}const rid='r'+rSeq++;shops[rid]={id:rid,name,items:[],images:[]};pushS();document.getElementById('inp-shop').value='';toast('已建立：'+name);rAdmin();}
+function delShop(rid,e){e.stopPropagation();if(!confirm('刪除「'+shops[rid]?.name+'」？'))return;delete shops[rid];DKEYS.forEach(k=>{if(sched[k]===rid)sched[k]=null;});pushS();pushSc();if(editRid===rid)editRid=null;if(importRid===rid)importRid=null;rAll();rAdmin();}
 function openSM(i){
   const rids=Object.keys(shops);if(!rids.length){toast('請先建立店家');return;}
   document.getElementById('smTitle').textContent='設定週'+DAYS[i]+'的飲料店';
-  document.getElementById('smBody').innerHTML=`<select id="smSel" style="width:100%;padding:9px;border:1px solid var(--bd2);border-radius:var(--rs);font-size:14px;background:var(--sf);">
-    <option value="">(不安排)</option>
-    ${rids.map(r=>`<option value="${r}"${sched[DKEYS[i]]===r?' selected':''}>${shops[r].name}</option>`).join('')}
-  </select>`;
-  document.getElementById('schedModal')._day=i;
-  document.getElementById('schedModal').classList.add('on');
+  document.getElementById('smBody').innerHTML=`<select id="smSel" style="width:100%;padding:9px;border:1px solid var(--bd2);border-radius:var(--rs);font-size:14px;background:var(--sf);"><option value="">(不安排)</option>${rids.map(r=>`<option value="${r}"${sched[DKEYS[i]]===r?' selected':''}>${shops[r].name}</option>`).join('')}</select>`;
+  document.getElementById('schedModal')._day=i;document.getElementById('schedModal').classList.add('on');
 }
 function closeSM(){document.getElementById('schedModal').classList.remove('on');}
-function doSched(){
-  const i=document.getElementById('schedModal')._day;
-  const v=document.getElementById('smSel').value;
-  sched[DKEYS[i]]=v||null;pushSc();
-  if(i===dayIdx) rAll();
-  rAdmin();toast('已設定週'+DAYS[i]);
-  closeSM();
-}
+function doSched(){const i=document.getElementById('schedModal')._day;const v=document.getElementById('smSel').value;sched[DKEYS[i]]=v||null;pushSc();if(i===dayIdx)rAll();rAdmin();toast('已設定週'+DAYS[i]);closeSM();}
 function addDrink(){
   const name=document.getElementById('inp-dn').value.trim();
   const price=parseInt(document.getElementById('inp-dm').value)||0;
@@ -973,61 +698,36 @@ function addDrink(){
   const tea=document.getElementById('inp-dtea').value.trim();
   const hot=document.getElementById('inp-dhot').value.trim();
   const addon=document.getElementById('inp-dadd').value.trim();
+  const pickup=document.getElementById('inp-pickup').value.trim();
   const fixed=document.getElementById('inp-dfx').checked;
   if(!name||price<=0){toast('請輸入名稱與M價格');return;}
   if(!editRid){toast('請先選擇店家');return;}
-  if(!shops[editRid].items) shops[editRid].items=[];
+  if(!shops[editRid].items)shops[editRid].items=[];
   const item={id:iSeq++,name,price,cat};
-  if(priceL>0) item.priceL=priceL;
+  if(priceL>0)item.priceL=priceL;
   if(tea){const tArr=tea.split('|').map(t=>t.trim()).filter(Boolean);if(tArr.length)item.tea=tArr;}
   if(hot){const hArr=hot.split('|').map(h=>h.trim()).filter(Boolean);if(hArr.length)item.hotOptions=hArr;}
-  if(addon) item.addon=addon.split('|').map(a=>a.trim()).filter(Boolean);
-  if(fixed) item.fixedSugar=true;
+  if(addon)item.addon=addon.split('|').map(a=>a.trim()).filter(Boolean);
+  if(pickup){const pArr=pickup.split('|').map(p=>p.trim()).filter(Boolean);if(pArr.length)item.pickupOptions=pArr;}
+  if(fixed)item.fixedSugar=true;
   shops[editRid].items.push(item);pushS();
-  ['inp-dn','inp-dm','inp-dl','inp-dtea','inp-dhot','inp-dadd'].forEach(id=>document.getElementById(id).value='');
+  ['inp-dn','inp-dm','inp-dl','inp-dtea','inp-dhot','inp-dadd','inp-pickup'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('inp-dfx').checked=false;
   rCat();rDrinks();rAdmin();toast('已新增：'+name);
 }
 function delDrink(rid,idx){shops[rid].items.splice(idx,1);pushS();rCat();rDrinks();rAdmin();}
-function addDept(){
-  const name=document.getElementById('inp-dept').value.trim();
-  if(!name){toast('請輸入部門名稱');return;}
-  if(depts.find(d=>d.name===name)){toast('部門已存在');return;}
-  depts.push({name,members:[]});document.getElementById('inp-dept').value='';pushD();toast('已新增：'+name);
-}
-function delDept(name){
-  if(!confirm('刪除「'+name+'」？'))return;
-  depts=depts.filter(d=>d.name!==name);pushD();toast('已刪除');
-}
-function addMem(){
-  const dn=document.getElementById('sel-dept').value,name=document.getElementById('inp-mem').value.trim();
-  if(!dn){toast('請選擇部門');return;}if(!name){toast('請輸入姓名');return;}
-  const d=depts.find(d=>d.name===dn);if(!d)return;
-  if(!d.members)d.members=[];
-  if(d.members.includes(name)){toast('人員已存在');return;}
-  d.members.push(name);document.getElementById('inp-mem').value='';pushD();toast('已新增');
-}
+function addDept(){const name=document.getElementById('inp-dept').value.trim();if(!name){toast('請輸入部門名稱');return;}if(depts.find(d=>d.name===name)){toast('部門已存在');return;}depts.push({name,members:[]});document.getElementById('inp-dept').value='';pushD();toast('已新增：'+name);}
+function delDept(name){if(!confirm('刪除「'+name+'」？'))return;depts=depts.filter(d=>d.name!==name);pushD();toast('已刪除');}
+function addMem(){const dn=document.getElementById('sel-dept').value,name=document.getElementById('inp-mem').value.trim();if(!dn){toast('請選擇部門');return;}if(!name){toast('請輸入姓名');return;}const d=depts.find(d=>d.name===dn);if(!d)return;if(!d.members)d.members=[];if(d.members.includes(name)){toast('人員已存在');return;}d.members.push(name);document.getElementById('inp-mem').value='';pushD();toast('已新增');}
 function delMem(dn,name){const d=depts.find(d=>d.name===dn);if(!d)return;d.members=d.members.filter(m=>m!==name);pushD();toast('已刪除');}
 function chPwd(){const p=document.getElementById('inp-pwd').value.trim();if(!p){toast('請輸入密碼');return;}localStorage.setItem('drinkPwd',p);document.getElementById('inp-pwd').value='';toast('密碼已更新');}
-function clearToday(){
-  if(!window.confirm('確定清空今日訂單？'))return;
-  const r=tRid();if(r&&orders[dk()])delete orders[dk()][r];
-  locked[dk()]={};pushO();pushL();rAll();rSum();toast('已清空');
-}
+function clearToday(){if(!window.confirm('確定清空今日訂單？'))return;const r=tRid();if(r&&orders[dk()])delete orders[dk()][r];locked[dk()]={};pushO();pushL();rAll();rSum();toast('已清空');}
 
-/* ── CSV ── */
 function dov(e){e.preventDefault();document.getElementById('uz').classList.add('drag');}
 function dol(){document.getElementById('uz').classList.remove('drag');}
 function dod(e){e.preventDefault();dol();const f=e.dataTransfer.files[0];if(f)procCsv(f);}
 function onCsv(e){const f=e.target.files[0];if(f)procCsv(f);e.target.value='';}
-function onReupCsv(e){
-  const f=e.target.files[0];if(!f)return;
-  if(editRid&&shops[editRid]&&confirm('清除「'+shops[editRid].name+'」現有飲品並重新匯入？')){
-    shops[editRid].items=[];
-    procCsv(f,document.getElementById('reupBox'),document.getElementById('reupTxt'));
-  }
-  e.target.value='';
-}
+function onReupCsv(e){const f=e.target.files[0];if(!f)return;if(editRid&&shops[editRid]&&confirm('清除「'+shops[editRid].name+'」現有飲品並重新匯入？')){shops[editRid].items=[];procCsv(f,document.getElementById('reupBox'),document.getElementById('reupTxt'));}e.target.value='';}
 function procCsv(file,box,txt){
   if(!box){box=document.getElementById('csvBox');txt=document.getElementById('csvTxt');}
   const rid=importRid||editRid;
@@ -1043,30 +743,15 @@ function procCsv(file,box,txt){
       lines.slice(si).forEach((line,idx)=>{
         if(!line)return;
         const parts=line.split(sep).map(p=>p.trim());
-        let name,price,cat='飲品',addonStr='',fixedStr='',priceLStr='';
-        let teaStr='',hotStr='';
-        if(isTab&&parts.length>=3){
-          cat=parts[0];name=parts[1];price=Math.round(Number(parts[2].replace(/[^0-9.]/g,'')));
-          teaStr=parts[3]||'';hotStr=parts[4]||'';addonStr=parts[5]||'';fixedStr=parts[6]||'';priceLStr=parts[7]||'';
-        } else if(!isTab&&parts.length>=2){
-          name=parts[0];price=Math.round(Number(parts[1].replace(/[^0-9.]/g,'')));
-          cat=parts[2]||'飲品';teaStr=parts[3]||'';hotStr=parts[4]||'';
-          addonStr=parts[5]||'';fixedStr=parts[6]||'';priceLStr=parts[7]||'';
-        }
+        let name,price,cat='飲品',teaStr='',hotStr='',addonStr='',fixedStr='',priceLStr='';
+        if(isTab&&parts.length>=3){cat=parts[0];name=parts[1];price=Math.round(Number(parts[2].replace(/[^0-9.]/g,'')));teaStr=parts[3]||'';hotStr=parts[4]||'';addonStr=parts[5]||'';fixedStr=parts[6]||'';priceLStr=parts[7]||'';}
+        else if(!isTab&&parts.length>=2){name=parts[0];price=Math.round(Number(parts[1].replace(/[^0-9.]/g,'')));cat=parts[2]||'飲品';teaStr=parts[3]||'';hotStr=parts[4]||'';addonStr=parts[5]||'';fixedStr=parts[6]||'';priceLStr=parts[7]||'';}
         else{errs.push('第'+(si+idx+1)+'行錯誤');return;}
         if(!name)return;
-        // M價格空白時，嘗試用L價格
         const pl=priceLStr?Math.round(Number(priceLStr.replace(/[^0-9.]/g,''))):0;
-        const origPrice=price; // 記錄原始M價格
-        if(!price||price<=0){
-          if(pl>0){
-            price=pl; // M空白時用L價格當單一價格，不顯示杯型
-          } else {
-            errs.push('第'+(si+idx+1)+'行無有效價格');return;
-          }
-        }
+        const origPrice=price;
+        if(!price||price<=0){if(pl>0){price=pl;}else{errs.push('第'+(si+idx+1)+'行無有效價格');return;}}
         const item={id:iSeq++,name,price,cat};
-        // 只有 M 和 L 都填寫才顯示杯型選項
         if(origPrice>0&&pl>0&&pl!==price)item.priceL=pl;
         if(teaStr){const tArr=teaStr.split('|').map(t=>t.trim()).filter(Boolean);if(tArr.length)item.tea=tArr;}
         if(hotStr){const hArr=hotStr.split('|').map(h=>h.trim()).filter(Boolean);if(hArr.length)item.hotOptions=hArr;}
@@ -1091,67 +776,23 @@ function procCsv(file,box,txt){
   tryRead(['UTF-8','Big5','GBK']);
 }
 function dlTemplate(){
-  const rows=['# 格式：飲品名稱,M價格,分類,加料(名稱:加價|名稱:加價),甜度固定,L價格','厚哩青茶,30,沏茶,,,','古釀冬瓜茶,30,沏茶,,甜度固定,','厚哩奶茶,50,醇奶,波霸:10|椰果:10|QQ:10,,','抹茶鮮奶,65,鮮奶,,,70'];
+  const rows=['# 格式：飲品名稱,M價格,分類,茶類選項,冰熱選項,加料(名稱:加價|名稱:加價),甜度固定,L價格','厚哩青茶,30,沏茶,,,,,','古釀冬瓜茶,30,沏茶,,,,,','厚哩奶茶,50,醇奶,,,波霸:10|椰果:10|QQ:10,,','抹茶鮮奶,65,鮮奶,,,,,70'];
   const b=new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='飲料範本.csv';a.click();
 }
-
-/* ── Images ── */
-function onImg(e){
-  if(!editRid){toast('請先選擇店家');return;}
-  [...e.target.files].forEach(f=>{
-    const rd=new FileReader();
-    rd.onload=ev=>{
-      if(!shops[editRid].images)shops[editRid].images=[];
-      shops[editRid].images.push(ev.target.result);
-      pushS();rAdmin();rShop();toast('照片已上傳');
-    };rd.readAsDataURL(f);
-  });e.target.value='';
-}
+function onImg(e){if(!editRid){toast('請先選擇店家');return;}[...e.target.files].forEach(f=>{const rd=new FileReader();rd.onload=ev=>{if(!shops[editRid].images)shops[editRid].images=[];shops[editRid].images.push(ev.target.result);pushS();rAdmin();rShop();toast('照片已上傳');};rd.readAsDataURL(f);});e.target.value='';}
 function delImg(rid,idx){shops[rid].images.splice(idx,1);pushS();rAdmin();rShop();}
 function openImg(url){document.getElementById('imgSrc').src=url;document.getElementById('imgModal').classList.add('on');}
 function closeImg(){document.getElementById('imgModal').classList.remove('on');document.getElementById('imgSrc').src='';}
-
-/* ── Tab / Login ── */
-function goTab(t){
-  ['order','summary','admin'].forEach(id=>{
-    document.getElementById('p-'+id).classList.toggle('on',id===t);
-    const tb=document.getElementById('t-'+id);if(tb)tb.classList.toggle('on',id===t);
-  });
-  if(t==='summary')rSum();
-  if(t==='admin')rAdmin();
-}
-function doLogin(){
-  const p=document.getElementById('pwdIn').value;
-  if(p===getPwd()){
-    isAdmin=true;sessionStorage.setItem('dAdmin','1');
-    document.getElementById('abadge').style.display='';
-    document.getElementById('t-admin').style.display='';
-    document.getElementById('loginBg').classList.remove('on');
-    document.getElementById('pwdIn').value='';
-    goTab('admin');toast('已登入管理員');
-  }else{toast('密碼錯誤');}
-}
+function goTab(t){['order','summary','admin'].forEach(id=>{document.getElementById('p-'+id).classList.toggle('on',id===t);const tb=document.getElementById('t-'+id);if(tb)tb.classList.toggle('on',id===t);});if(t==='summary')rSum();if(t==='admin')rAdmin();}
+function doLogin(){const p=document.getElementById('pwdIn').value;if(p===getPwd()){isAdmin=true;sessionStorage.setItem('dAdmin','1');document.getElementById('abadge').style.display='';document.getElementById('t-admin').style.display='';document.getElementById('loginBg').classList.remove('on');document.getElementById('pwdIn').value='';goTab('admin');toast('已登入管理員');}else{toast('密碼錯誤');}}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2500);}
 
-/* ── Init ── */
-if(sessionStorage.getItem('dAdmin')==='1'){
-  isAdmin=true;
-  document.getElementById('abadge').style.display='';
-  document.getElementById('t-admin').style.display='';
-}
-// 等 Firebase SDK 載入完成再初始化
+if(sessionStorage.getItem('dAdmin')==='1'){isAdmin=true;document.getElementById('abadge').style.display='';document.getElementById('t-admin').style.display='';}
 (function wait(n){
-  if(typeof firebase!=='undefined'){
-    initFB();
-    rAll();
-  } else if(n>0){
-    setTimeout(()=>wait(n-1), 200);
-  } else {
-    document.getElementById('banner').className='warn';
-    document.getElementById('bannerTxt').textContent='⚠️ Firebase 載入失敗，請重新整理';
-    rAll();
-  }
+  if(typeof firebase!=='undefined'){initFB();rAll();}
+  else if(n>0){setTimeout(()=>wait(n-1),200);}
+  else{document.getElementById('banner').className='warn';document.getElementById('bannerTxt').textContent='⚠️ Firebase 載入失敗，請重新整理';rAll();}
 })(20);
 </script>
 </body>
