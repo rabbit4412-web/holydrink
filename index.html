@@ -225,12 +225,12 @@ button,input,select{font-family:inherit;}
     <div class="uz" id="uz" onclick="document.getElementById('csvIn').click()" ondragover="dov(event)" ondrop="dod(event)" ondragleave="dol()">
       <div class="uz-ic">📄</div>
       <div class="uz-t">點擊或拖曳 CSV 匯入菜單</div>
-      <div class="uz-s">格式：飲品名稱, M價格, 分類, 茶類選項, 冰熱選項, 加料, 甜度固定, L價格</div>
+      <div class="uz-s">格式：飲品名稱, M價格, 分類, 茶類選項, 冰熱選項, 加料, 甜度固定,取餐時間, L價格</div>
     </div>
     <input type="file" id="csvIn" accept=".csv,.txt" style="display:none" onchange="onCsv(event)">
     <div class="abox" id="csvBox"><div class="abox-t" id="csvTxt"></div></div>
     <div style="background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px;margin-top:6px;font-size:11px;color:var(--hint);font-family:monospace;line-height:1.9;">
-      飲品名稱,M價格,分類,加料選項,甜度固定,L價格<br>
+      飲品名稱,M價格,分類,加料選項,甜度固定,取餐時間,L價格<br>
       厚哩青茶,30,沏茶,,,<br>
       古釀冬瓜茶,30,沏茶,,甜度固定,<br>
       厚哩奶茶,50,醇奶,波霸:10|椰果:10|QQ:10,,<br>
@@ -265,6 +265,7 @@ button,input,select{font-family:inherit;}
     <div class="arow">
       <input id="inp-dhot" placeholder="冰熱選項(熱|冰 或 熱 或留空)">
       <input id="inp-dadd" placeholder="加料(波霸:10|椰果:10|奶蓋:33)">
+      <input id="inp-pickup" placeholder="取餐時間(上班拿|下班拿)">
       <label style="font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap;">
         <input type="checkbox" id="inp-dfx"> 甜度固定
       </label>
