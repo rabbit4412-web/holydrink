@@ -189,15 +189,15 @@ button,input,select{font-family:inherit;}
     <div id="importLbl" style="font-size:12px;min-height:18px;margin-bottom:8px;"></div>
     <div class="uz" id="uz" onclick="document.getElementById('csvIn').click()" ondragover="dov(event)" ondrop="dod(event)" ondragleave="dol()">
       <div class="uz-ic">📄</div><div class="uz-t">點擊或拖曳 CSV 匯入菜單</div>
-      <div class="uz-s">格式：飲品名稱, M價格, 分類, 茶類選項, 冰熱選項, 加料, 甜度固定, L價格</div>
+      <div class="uz-s">格式：飲品名稱, M價格, 分類, 茶類選項, 冰熱選項, 加料, 甜度固定, 取餐時間, L價格</div>
     </div>
     <input type="file" id="csvIn" accept=".csv,.txt" style="display:none" onchange="onCsv(event)">
     <div class="abox" id="csvBox"><div class="abox-t" id="csvTxt"></div></div>
     <div style="background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px;margin-top:6px;font-size:11px;color:var(--hint);font-family:monospace;line-height:1.9;">
-      飲品名稱,M價格,分類,茶類選項,冰熱選項,加料選項,甜度固定,L價格<br>
-      厚哩青茶,30,沏茶,,,,,<br>
-      厚哩奶茶,50,醇奶,,,波霸:10|椰果:10|QQ:10,,<br>
-      抹茶鮮奶,65,鮮奶,,,,,70
+      飲品名稱,M價格,分類,茶類選項,冰熱選項,加料選項,甜度固定,取餐時間,L價格<br>
+      厚哩青茶,30,沏茶,,,,, 上班拿|下班拿,<br>
+      厚哩奶茶,50,醇奶,,,波霸:10|椰果:10|QQ:10,,上班拿|下班拿,<br>
+      抹茶鮮奶,65,鮮奶,,,,,,70
     </div>
     <button class="bsm" style="margin-top:8px;font-size:12px;" onclick="dlTemplate()">⬇ 下載範本</button>
   </div>
@@ -743,9 +743,9 @@ function procCsv(file,box,txt){
       lines.slice(si).forEach((line,idx)=>{
         if(!line)return;
         const parts=line.split(sep).map(p=>p.trim());
-        let name,price,cat='飲品',teaStr='',hotStr='',addonStr='',fixedStr='',priceLStr='';
-        if(isTab&&parts.length>=3){cat=parts[0];name=parts[1];price=Math.round(Number(parts[2].replace(/[^0-9.]/g,'')));teaStr=parts[3]||'';hotStr=parts[4]||'';addonStr=parts[5]||'';fixedStr=parts[6]||'';priceLStr=parts[7]||'';}
-        else if(!isTab&&parts.length>=2){name=parts[0];price=Math.round(Number(parts[1].replace(/[^0-9.]/g,'')));cat=parts[2]||'飲品';teaStr=parts[3]||'';hotStr=parts[4]||'';addonStr=parts[5]||'';fixedStr=parts[6]||'';priceLStr=parts[7]||'';}
+        let name,price,cat='飲品',teaStr='',hotStr='',addonStr='',fixedStr='',pickupStr='',priceLStr='';
+        if(isTab&&parts.length>=3){cat=parts[0];name=parts[1];price=Math.round(Number(parts[2].replace(/[^0-9.]/g,'')));teaStr=parts[3]||'';hotStr=parts[4]||'';addonStr=parts[5]||'';fixedStr=parts[6]||'';pickupStr=parts[7]||'';priceLStr=parts[8]||'';}
+        else if(!isTab&&parts.length>=2){name=parts[0];price=Math.round(Number(parts[1].replace(/[^0-9.]/g,'')));cat=parts[2]||'飲品';teaStr=parts[3]||'';hotStr=parts[4]||'';addonStr=parts[5]||'';fixedStr=parts[6]||'';pickupStr=parts[7]||'';priceLStr=parts[8]||'';}
         else{errs.push('第'+(si+idx+1)+'行錯誤');return;}
         if(!name)return;
         const pl=priceLStr?Math.round(Number(priceLStr.replace(/[^0-9.]/g,''))):0;
@@ -757,6 +757,7 @@ function procCsv(file,box,txt){
         if(hotStr){const hArr=hotStr.split('|').map(h=>h.trim()).filter(Boolean);if(hArr.length)item.hotOptions=hArr;}
         if(addonStr){const arr=addonStr.split('|').map(a=>a.trim()).filter(Boolean);if(arr.length)item.addon=arr;}
         if(fixedStr&&fixedStr.includes('甜度固定'))item.fixedSugar=true;
+        if(pickupStr){const pArr=pickupStr.split('|').map(p=>p.trim()).filter(Boolean);if(pArr.length)item.pickupOptions=pArr;}
         newItems.push(item);
       });
       if(!newItems.length){box.className='abox show err';txt.textContent='❌ 沒有有效資料';setTimeout(()=>box.className='abox',4000);return;}
@@ -776,7 +777,7 @@ function procCsv(file,box,txt){
   tryRead(['UTF-8','Big5','GBK']);
 }
 function dlTemplate(){
-  const rows=['# 格式：飲品名稱,M價格,分類,茶類選項,冰熱選項,加料(名稱:加價|名稱:加價),甜度固定,L價格','厚哩青茶,30,沏茶,,,,,','古釀冬瓜茶,30,沏茶,,,,,','厚哩奶茶,50,醇奶,,,波霸:10|椰果:10|QQ:10,,','抹茶鮮奶,65,鮮奶,,,,,70'];
+  const rows=['# 格式：飲品名稱,M價格,分類,茶類選項,冰熱選項,加料(名稱:加價|名稱:加價),甜度固定,取餐時間,L價格','厚哩青茶,30,沏茶,,,,,上班拿|下班拿,','古釀冬瓜茶,30,沏茶,,,,,上班拿|下班拿,','厚哩奶茶,50,醇奶,,,波霸:10|椰果:10|QQ:10,,上班拿|下班拿,','抹茶鮮奶,65,鮮奶,,,,,上班拿|下班拿,70'];
   const b=new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='飲料範本.csv';a.click();
 }
