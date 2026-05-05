@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>公司飲料訂購</title>
-<!-- v3.1 grouped-summary + pickup-split + admin-cancel -->
+<!-- v3.2 fix-csv-delimiter-detection -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
@@ -176,7 +176,7 @@ button,input,select{font-family:inherit;}
 </style>
 </head>
 <body>
-<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.1 Firebase 即時同步</span></div>
+<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.2 Firebase 即時同步</span></div>
 <div class="hdr">
   <div class="hdr-top">
     <div style="display:flex;align-items:center;"><h1>🧋 飲料訂購</h1><span class="abadge" id="abadge" style="display:none">管理員</span></div>
@@ -328,8 +328,8 @@ const FB={
   messagingSenderId:"555132314787",
   appId:"1:555132314787:web:6f9a2e1932bbaab2e7cb16"
 };
-const DAYS=['一','二','三','四','五','HDY'];
-const DKEYS=['mon','tue','wed','thu','fri','HDY'];
+const DAYS=['一','二','三','四','五'];
+const DKEYS=['mon','tue','wed','thu','fri'];
 const ICE=['去冰','微冰','少冰','正常冰'];
 const SUGAR=['無糖','1分糖','2分糖','微糖','半糖','少糖','全糖'];
 
@@ -940,8 +940,14 @@ function procCsv(file,box,txt){
     try{
       const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l&&!l.startsWith('#'));
       const newItems=[],errs=[];
-      const fl=lines[0]||'',isTab=fl.includes('\t'),sep=isTab?'\t':',';
-      const hp=fl.split(sep),pc=isTab?hp[2]:hp[1];
+      // ── 分隔符偵測：用多數決，避免 header 有 Tab 就整份誤判 ──
+      // 取前5行非空行計算各行 tab 數與逗號數，哪個多就用哪個
+      const sampleLines=lines.slice(0,5).filter(l=>l);
+      const tabCount=sampleLines.reduce((s,l)=>(l.match(/\t/g)||[]).length+s,0);
+      const commaCount=sampleLines.reduce((s,l)=>(l.match(/,/g)||[]).length+s,0);
+      const isTab=tabCount>commaCount;
+      const sep=isTab?'\t':',';
+      const hp=(lines[0]||'').split(sep),pc=isTab?hp[2]:hp[1];
       const si=(isNaN(Number((pc||'').replace(/[^0-9.]/g,'')))||!pc)?1:0;
       lines.slice(si).forEach((line,idx)=>{
         if(!line)return;
