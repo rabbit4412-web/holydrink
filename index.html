@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>公司飲料訂購</title>
-<!-- v3.3 smart-csv-header-parse -->
+<!-- v3.5 addon-before-pickup -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
@@ -176,7 +176,7 @@ button,input,select{font-family:inherit;}
 </style>
 </head>
 <body>
-<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.3 Firebase 即時同步</span></div>
+<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.5 Firebase 即時同步</span></div>
 <div class="hdr">
   <div class="hdr-top">
     <div style="display:flex;align-items:center;"><h1>🧋 飲料訂購</h1><span class="abadge" id="abadge" style="display:none">管理員</span></div>
@@ -562,6 +562,10 @@ function renderOM(item){
       ${item.tea.map(t=>`<button class="obt${PTEA===t?' on':''}" onclick="setPtea('${t}')">${t}</button>`).join('')}
     </div></div>`;
   }
+  h+=`<div class="osec"><div class="olbl">🍬 糖度</div>`;
+  if(item.fixedSugar){h+=`<div style="font-size:12px;color:var(--a);padding:4px 0;">甜度固定，無法更改</div>`;}
+  else{h+=`<div class="obts">${SUGAR.map(v=>`<button class="obt${PSUGAR===v?' on':''}" onclick="setPsugar('${v}')">${v}</button>`).join('')}</div>`;}
+  h+=`</div>`;
   if(item.hotOptions&&item.hotOptions.length>0){
     h+=`<div class="osec"><div class="olbl">🌡️ 溫度</div><div class="obts">
       ${item.hotOptions.map(v=>`<button class="obt${PICE===v?' on':''}" onclick="setPice('${v}')">${v}</button>`).join('')}
@@ -571,19 +575,15 @@ function renderOM(item){
       ${ICE.map(v=>`<button class="obt${PICE===v?' on':''}" onclick="setPice('${v}')">${v}</button>`).join('')}
     </div></div>`;
   }
-  h+=`<div class="osec"><div class="olbl">🍬 糖度</div>`;
-  if(item.fixedSugar){h+=`<div style="font-size:12px;color:var(--a);padding:4px 0;">甜度固定，無法更改</div>`;}
-  else{h+=`<div class="obts">${SUGAR.map(v=>`<button class="obt${PSUGAR===v?' on':''}" onclick="setPsugar('${v}')">${v}</button>`).join('')}</div>`;}
-  h+=`</div>`;
-  if(item.pickupOptions&&item.pickupOptions.length>0){
-    h+=`<div class="osec"><div class="olbl">🕐 取餐時間</div><div class="obts">
-      ${item.pickupOptions.map(v=>`<button class="obt${PPICKUP===v?' on':''}" onclick="setPpickup('${v}')">${v}</button>`).join('')}
-    </div></div>`;
-  }
   if(item.addon&&item.addon.length){
     h+=`<div class="osec"><div class="olbl">➕ 加料</div><div class="obts">
       ${item.addon.map(a=>`<button class="obt${PADDON===a?' on':''}" onclick="setPaddon('${a}')">${aN(a)} <span style="font-size:10px;opacity:.75;">+${aP(a)}元</span></button>`).join('')}
       <button class="obt${PADDON===''?' on':''}" onclick="setPaddon('')">不加料</button>
+    </div></div>`;
+  }
+  if(item.pickupOptions&&item.pickupOptions.length>0){
+    h+=`<div class="osec"><div class="olbl">🕐 取餐時間</div><div class="obts">
+      ${item.pickupOptions.map(v=>`<button class="obt${PPICKUP===v?' on':''}" onclick="setPpickup('${v}')">${v}</button>`).join('')}
     </div></div>`;
   }
   document.getElementById('omBody').innerHTML=h;
