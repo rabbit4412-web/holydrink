@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>公司飲料訂購</title>
-<!-- v3.6 deadline + logout -->
+<!-- v3.7 sugar-before-ice-in-label -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
@@ -176,7 +176,7 @@ button,input,select{font-family:inherit;}
 </style>
 </head>
 <body>
-<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.6 Firebase 即時同步</span></div>
+<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.7 Firebase 即時同步</span></div>
 <div class="hdr">
   <div class="hdr-top">
     <div style="display:flex;align-items:center;"><h1>🧋 飲料訂購</h1><span class="abadge" id="abadge" style="display:none">管理員</span></div>
@@ -453,10 +453,10 @@ function lbl(item,size,tea,ice,sugar,addon,pickup){
   let s=item.name;
   if(size&&item.priceL)s+=' ('+size+')';
   if(tea)s+=' | '+tea;
-  if(ice==='熱飲')s+=' | ☕熱飲';
-  else if(ice)s+=' | '+ice;
   if(item.fixedSugar)s+=' | 甜度固定';
   else if(sugar)s+=' | '+sugar;
+  if(ice==='熱飲')s+=' | ☕熱飲';
+  else if(ice)s+=' | '+ice;
   if(addon)s+=' | +'+aN(addon);
   if(pickup)s+=' | 🕐'+pickup;
   return s;
@@ -466,10 +466,10 @@ function lblNoPickup(item,size,tea,ice,sugar,addon){
   let s=item.name;
   if(size&&item.priceL)s+=' ('+size+')';
   if(tea)s+=' | '+tea;
-  if(ice==='熱飲')s+=' | ☕熱飲';
-  else if(ice)s+=' | '+ice;
   if(item.fixedSugar)s+=' | 甜度固定';
   else if(sugar)s+=' | '+sugar;
+  if(ice==='熱飲')s+=' | ☕熱飲';
+  else if(ice)s+=' | '+ice;
   if(addon)s+=' | +'+aN(addon);
   return s;
 }
