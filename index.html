@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>公司飲料訂購</title>
-<!-- v3.5 addon-before-pickup -->
+<!-- v3.6 deadline + logout -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
@@ -176,7 +176,7 @@ button,input,select{font-family:inherit;}
 </style>
 </head>
 <body>
-<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.5 Firebase 即時同步</span></div>
+<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.6 Firebase 即時同步</span></div>
 <div class="hdr">
   <div class="hdr-top">
     <div style="display:flex;align-items:center;"><h1>🧋 飲料訂購</h1><span class="abadge" id="abadge" style="display:none">管理員</span></div>
@@ -273,9 +273,26 @@ button,input,select{font-family:inherit;}
     <div id="deptMgmt"></div>
   </div>
   <div class="asec">
+    <h3>⏰ 點餐截止時間設定</h3>
+    <p style="font-size:12px;color:var(--sub);margin-bottom:12px;">設定後所有人到時間即無法點餐</p>
+    <div id="dlStatus" style="margin-bottom:10px;"></div>
+    <div style="background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;">
+      <div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:8px;">設定截止日期時間（套用至所有天）</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="datetime-local" id="inp-dl-dt" style="flex:1;min-width:200px;padding:9px 10px;border:1px solid var(--bd2);border-radius:var(--rs);font-size:14px;background:var(--sf);color:var(--tx);">
+        <button class="bsm" onclick="setAllDl()" style="border-color:var(--g);color:var(--g);">✓ 套用</button>
+        <button class="bsm" onclick="clearAllDl()" style="border-color:#F09595;color:var(--r);">✕ 清除</button>
+      </div>
+      <div style="font-size:11px;color:var(--hint);margin-top:6px;">設定後週一到週五都會在此時間截止點餐</div>
+    </div>
+  </div>
+  <div class="asec">
     <h3>⚙️ 其他</h3>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="bsm" style="color:var(--r);border-color:#F09595;" onclick="clearToday()">🗑 清空今日訂單</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="bsm" style="color:var(--r);border-color:#F09595;" onclick="clearToday()">🗑 清空今日訂單</button>
+    </div>
     <div class="arow" style="margin-top:10px;"><input id="inp-pwd" placeholder="新管理員密碼" type="password"><button class="bsm" onclick="chPwd()">更新密碼</button></div>
+    <button class="bsm" style="width:100%;margin-top:8px;color:var(--r);border-color:#F09595;" onclick="adminLogout()">🚪 登出管理員</button>
   </div>
 </div>
 
@@ -328,13 +345,14 @@ const FB={
   messagingSenderId:"555132314787",
   appId:"1:555132314787:web:6f9a2e1932bbaab2e7cb16"
 };
-const DAYS=['一','二','三','四','五','HPD'];
-const DKEYS=['mon','tue','wed','thu','fri','HPD'];
+const DAYS=['一','二','三','四','五'];
+const DKEYS=['mon','tue','wed','thu','fri'];
 const ICE=['去冰','微冰','少冰','正常冰'];
 const SUGAR=['無糖','1分糖','2分糖','微糖','半糖','少糖','全糖'];
 
 let db=null,shops={},sched={mon:null,tue:null,wed:null,thu:null,fri:null};
 let depts=[],orders={mon:{},tue:{},wed:{},thu:{},fri:{}},locked={mon:{},tue:{},wed:{},thu:{},fri:{}};
+let deadlines={mon:'',tue:'',wed:'',thu:'',fri:''};
 let dayIdx=Math.min(Math.max(new Date().getDay()-1,0),4);
 let curMem=null,curCat='全部',isAdmin=false,editRid=null,importRid=null;
 let rSeq=100,iSeq=1000,dPush=false;
@@ -355,6 +373,7 @@ function initFB(){
       rAll();if(isAdmin)rAdmin();
     });
     db.ref('drink_locked').on('value',snap=>{const v=snap.val();if(v)DKEYS.forEach(k=>{if(v[k])locked[k]=v[k];});rAll();});
+    db.ref('drink_deadlines').on('value',snap=>{const v=snap.val();if(v)Object.assign(deadlines,v);rAll();startDlTimer();});
     db.ref('.info/connected').on('value',snap=>{ss(snap.val()?'ok':'off');rAll();});
   }catch(e){console.error(e);ss('off');document.getElementById('banner').className='warn';document.getElementById('bannerTxt').textContent='⚠️ Firebase 連線失敗';rAll();}
 }
@@ -371,6 +390,37 @@ function pushD(){
   rAll();if(isAdmin)rAdmin();
 }
 
+function pushDl(){if(db)db.ref('drink_deadlines').set(deadlines);}
+
+/* ── 截止時間 ── */
+function getDl(){return deadlines[dk()]||'';}
+function isDlClosed(){
+  const dl=getDl();if(!dl)return false;
+  const now=new Date();
+  if(dl.includes('T')){
+    const [dp,tp]=dl.split('T');
+    const [y,mo,d]=dp.split('-').map(Number);
+    const [hh,mm]=(tp||'00:00').split(':').map(Number);
+    return now>=new Date(y,mo-1,d,hh,mm,0);
+  }
+  const [hh,mm]=dl.split(':').map(Number);
+  return now>=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0);
+}
+function dlTxt(dl){
+  if(!dl)return'';
+  if(dl.includes('T')){
+    const [dp,tp]=dl.split('T');
+    const [y,mo,d]=dp.split('-').map(Number);
+    const [hh,mm]=(tp||'00:00').split(':').map(Number);
+    return mo+'/'+d+' '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+  }
+  return dl;
+}
+let _dlTimer=null;
+function startDlTimer(){
+  if(_dlTimer)clearInterval(_dlTimer);
+  _dlTimer=setInterval(()=>{rShop();rDrinks();},15000);
+}
 function dk(){return DKEYS[dayIdx];}
 function tShop(){const r=sched[dk()];return r?shops[r]:null;}
 function tRid(){return sched[dk()]||null;}
@@ -448,9 +498,13 @@ function rWeek(){
 function swDay(i){dayIdx=i;curMem=null;curCat='全部';rAll();}
 function rShop(){
   const r=tShop(),el=document.getElementById('shopInfo');
-  if(!r){el.innerHTML='<div style="font-size:13px;color:var(--hint);padding:6px 0;">今日尚未設定飲料店</div>';return;}
+  const dl=getDl(),closed=isDlClosed();
+  let dlBadge='';
+  if(dl&&closed) dlBadge=`<span style="display:inline-flex;align-items:center;gap:4px;background:var(--rl);color:var(--r);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid #F09595;">🔒 點餐已截止（${dlTxt(dl)}）</span>`;
+  else if(dl) dlBadge=`<span style="display:inline-flex;align-items:center;gap:4px;background:var(--al);color:var(--a);font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;border:1px solid #D4A017;">⏰ 截止：${dlTxt(dl)}</span>`;
+  if(!r){el.innerHTML=`<div style="font-size:13px;color:var(--hint);padding:4px 0;">今日尚未設定飲料店</div>${dlBadge?`<div style="margin-top:6px;">${dlBadge}</div>`:''}`;return;}
   const imgs=(r.images||[]).map(url=>`<img src="${url}" onclick="openImg('${url}')">`).join('');
-  el.innerHTML=`<div class="sbar"><div class="sname">${r.name}</div><div class="ssub">今日店家 · 週${DAYS[dayIdx]}</div>${imgs?`<div class="simgs">${imgs}</div>`:''}</div>`;
+  el.innerHTML=`<div class="sbar"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;"><span class="sname">${r.name}</span>${dlBadge}</div><div class="ssub">今日店家 · 週${DAYS[dayIdx]}</div>${imgs?`<div class="simgs">${imgs}</div>`:''}</div>`;
 }
 function rDepts(){
   const el=document.getElementById('deptArea');
@@ -537,6 +591,7 @@ function rDrinks(){
 
 function openOM(id){
   if(!curMem){toast('請先選擇名字');return;}
+  if(isDlClosed()){toast('點餐已截止');return;}
   const r=tShop();
   const item=(r?.items||[]).find(i=>String(i.id)===String(id));
   if(!item){toast('找不到飲品');return;}
@@ -637,6 +692,7 @@ function adminCancelDrink(deptName, memName, itemKey){
 let _confirmMem=null;
 function doConfirm(){
   if(!curMem){toast('錯誤：未選名字');return;}
+  if(isDlClosed()){toast('點餐已截止，無法送出');return;}
   const o=getOrd(curMem.d,curMem.m);
   if(!Object.keys(o.items||{}).length){toast('請先選擇飲料');return;}
   const total=mTotal(curMem.d,curMem.m);
@@ -860,6 +916,14 @@ function rAdmin(){
   const ds=document.getElementById('sel-dept');
   ds.innerHTML='<option value="">選擇部門</option>'+depts.map(d=>`<option>${d.name}</option>`).join('');
   document.getElementById('deptMgmt').innerHTML=depts.map(d=>`<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:13px;font-weight:600">${d.name}</span><button onclick="delDept('${d.name}')" style="font-size:11px;color:var(--r);border:none;background:none;cursor:pointer;">刪除</button></div><div class="crow">${(d.members||[]).map(m=>`<div class="dtag">${m}<button onclick="delMem('${d.name}','${m}')">×</button></div>`).join('')}</div></div>`).join('');
+  rAdminDl();
+  // pre-fill datetime input if not set
+  const dtInp=document.getElementById('inp-dl-dt');
+  if(dtInp&&!dtInp.value){
+    const now=new Date();
+    const pad=n=>String(n).padStart(2,'0');
+    dtInp.value=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
 }
 function selImport(r){importRid=r;rAdmin();}
 function selEdit(r){editRid=r;rAdmin();document.getElementById('editSec').scrollIntoView({behavior:'smooth'});}
@@ -904,6 +968,36 @@ function delDept(name){if(!confirm('刪除「'+name+'」？'))return;depts=depts
 function addMem(){const dn=document.getElementById('sel-dept').value,name=document.getElementById('inp-mem').value.trim();if(!dn){toast('請選擇部門');return;}if(!name){toast('請輸入姓名');return;}const d=depts.find(d=>d.name===dn);if(!d)return;if(!d.members)d.members=[];if(d.members.includes(name)){toast('人員已存在');return;}d.members.push(name);document.getElementById('inp-mem').value='';pushD();toast('已新增');}
 function delMem(dn,name){const d=depts.find(d=>d.name===dn);if(!d)return;d.members=d.members.filter(m=>m!==name);pushD();toast('已刪除');}
 function chPwd(){const p=document.getElementById('inp-pwd').value.trim();if(!p){toast('請輸入密碼');return;}localStorage.setItem('drinkPwd',p);document.getElementById('inp-pwd').value='';toast('密碼已更新');}
+function adminLogout(){isAdmin=false;sessionStorage.removeItem('dAdmin');document.getElementById('abadge').style.display='none';document.getElementById('t-admin').style.display='none';goTab('order');toast('已登出管理員');}
+function setAllDl(){
+  const dt=document.getElementById('inp-dl-dt').value;
+  if(!dt){toast('請選擇日期時間');return;}
+  DKEYS.forEach(d=>{deadlines[d]=dt;});
+  pushDl();rAll();rAdminDl();
+  toast('截止時間已設定：'+dlTxt(dt));
+}
+function clearAllDl(){
+  DKEYS.forEach(d=>{deadlines[d]='';});
+  pushDl();rAll();rAdminDl();
+  toast('已清除截止時間');
+}
+function rAdminDl(){
+  const el=document.getElementById('dlStatus');
+  if(!el)return;
+  const anyDl=DKEYS.map(d=>deadlines[d]||'').find(v=>v)||'';
+  const closed=anyDl&&isDlClosed();
+  if(!anyDl){el.innerHTML='<div style="font-size:13px;color:var(--hint);">尚未設定</div>';return;}
+  const color=closed?'var(--r)':'var(--a)';
+  const icon=closed?'🔒':'⏰';
+  el.innerHTML=`<div style="background:${closed?'var(--rl)':'var(--al)'};border:1px solid ${closed?'#F09595':'#D4A017'};border-radius:var(--rs);padding:9px 12px;display:flex;align-items:center;gap:8px;">
+    <span style="font-size:18px;">${icon}</span>
+    <div><div style="font-size:13px;font-weight:700;color:${color};">${dlTxt(anyDl)}</div>
+    <div style="font-size:11px;color:var(--sub);">${closed?'點餐已截止':'截止時間已設定，尚未到達'}</div></div>
+  </div>`;
+  // Also pre-fill the input
+  const inp=document.getElementById('inp-dl-dt');
+  if(inp&&!inp.value){inp.value=anyDl.includes('T')?anyDl:'';}
+}
 function clearToday(){if(!window.confirm('確定清空今日訂單？'))return;const r=tRid();if(r&&orders[dk()])delete orders[dk()][r];locked[dk()]={};pushO();pushL();rAll();rSum();toast('已清空');}
 
 function dov(e){e.preventDefault();document.getElementById('uz').classList.add('drag');}
