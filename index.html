@@ -176,7 +176,7 @@ button,input,select{font-family:inherit;}
 </style>
 </head>
 <body>
-<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.10 Firebase 即時同步</span></div>
+<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.11 Firebase 即時同步</span></div>
 <div class="hdr">
   <div class="hdr-top">
     <div style="display:flex;align-items:center;"><h1>🧋 飲料訂購</h1><span class="abadge" id="abadge" style="display:none">管理員</span></div>
@@ -365,7 +365,7 @@ function initFB(){
     firebase.initializeApp(FB);db=firebase.database();ss('s');
     db.ref('drink_orders').on('value',snap=>{const v=snap.val();if(v)DKEYS.forEach(k=>{if(v[k])orders[k]=v[k];});rAll();if(document.getElementById('p-summary').classList.contains('on'))rSum();});
     db.ref('drink_shops').on('value',snap=>{const v=snap.val();if(v){shops=v;const mx=Object.keys(shops).map(k=>parseInt(k.replace('r',''))||0).reduce((a,b)=>Math.max(a,b),99);rSeq=mx+1;}rAll();if(isAdmin)rAdmin();});
-    db.ref('drink_sched').on('value',snap=>{const v=snap.val();if(v)Object.assign(sched,v);rAll();if(isAdmin)rAdmin();});
+    db.ref('drink_sched').on('value',snap=>{const v=snap.val();if(v){const {__deadline,...rest}=v;Object.assign(sched,rest);}rAll();if(isAdmin)rAdmin();});
     db.ref('drink_depts').on('value',snap=>{
       if(dPush){dPush=false;return;}
       const v=snap.val();
@@ -373,9 +373,9 @@ function initFB(){
       rAll();if(isAdmin)rAdmin();
     });
     db.ref('drink_locked').on('value',snap=>{const v=snap.val();if(v)DKEYS.forEach(k=>{if(v[k])locked[k]=v[k];});rAll();});
-    db.ref('drink_deadline').on('value',snap=>{
+    db.ref('drink_sched/__deadline').on('value',snap=>{
       const v=snap.val();
-      _deadline=(v&&v.v)?v.v:'';
+      _deadline=(v&&typeof v==='string')?v:'';
       console.log('drink deadline loaded:',_deadline);
       rAll();startDlTimer();
     });
@@ -396,9 +396,8 @@ function pushD(){
 }
 
 function pushDl(){
-  if(!db){toast('⚠️ Firebase 未連線，截止時間未儲存');return;}
-  const val=_deadline?{v:_deadline}:{v:''};
-  db.ref('drink_deadline').set(val)
+  if(!db){toast('⚠️ Firebase 未連線');return;}
+  db.ref('drink_sched/__deadline').set(_deadline||null)
     .then(()=>console.log('drink deadline saved:',_deadline))
     .catch(e=>{ console.error('drink deadline save failed:',e); toast('⚠️ 截止時間儲存失敗'); });
 }
