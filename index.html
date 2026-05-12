@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>公司飲料訂購</title>
-<!-- v3.8 week-lock-before-ice-in-label -->
+<!-- v3.10 fix-deadline-persist-before-ice-in-label -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
@@ -176,7 +176,7 @@ button,input,select{font-family:inherit;}
 </style>
 </head>
 <body>
-<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.9 Firebase 即時同步</span></div>
+<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.10 Firebase 即時同步</span></div>
 <div class="hdr">
   <div class="hdr-top">
     <div style="display:flex;align-items:center;"><h1>🧋 飲料訂購</h1><span class="abadge" id="abadge" style="display:none">管理員</span></div>
@@ -373,7 +373,12 @@ function initFB(){
       rAll();if(isAdmin)rAdmin();
     });
     db.ref('drink_locked').on('value',snap=>{const v=snap.val();if(v)DKEYS.forEach(k=>{if(v[k])locked[k]=v[k];});rAll();});
-    db.ref('drink_deadline').on('value',snap=>{_deadline=snap.val()||'';rAll();startDlTimer();});
+    db.ref('drink_deadline').on('value',snap=>{
+      const v=snap.val();
+      _deadline=(v&&v.v)?v.v:'';
+      console.log('drink deadline loaded:',_deadline);
+      rAll();startDlTimer();
+    });
     db.ref('.info/connected').on('value',snap=>{ss(snap.val()?'ok':'off');rAll();});
   }catch(e){console.error(e);ss('off');document.getElementById('banner').className='warn';document.getElementById('bannerTxt').textContent='⚠️ Firebase 連線失敗';rAll();}
 }
@@ -390,7 +395,13 @@ function pushD(){
   rAll();if(isAdmin)rAdmin();
 }
 
-function pushDl(){if(db)db.ref('drink_deadline').set(_deadline);}
+function pushDl(){
+  if(!db){toast('⚠️ Firebase 未連線，截止時間未儲存');return;}
+  const val=_deadline?{v:_deadline}:{v:''};
+  db.ref('drink_deadline').set(val)
+    .then(()=>console.log('drink deadline saved:',_deadline))
+    .catch(e=>{ console.error('drink deadline save failed:',e); toast('⚠️ 截止時間儲存失敗'); });
+}
 
 /* ── 截止時間 ── */
 function getDl(){return _deadline||'';}
