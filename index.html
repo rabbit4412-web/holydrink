@@ -176,7 +176,7 @@ button,input,select{font-family:inherit;}
 </style>
 </head>
 <body>
-<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.8 Firebase 即時同步</span></div>
+<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.9 Firebase 即時同步</span></div>
 <div class="hdr">
   <div class="hdr-top">
     <div style="display:flex;align-items:center;"><h1>🧋 飲料訂購</h1><span class="abadge" id="abadge" style="display:none">管理員</span></div>
@@ -345,14 +345,14 @@ const FB={
   messagingSenderId:"555132314787",
   appId:"1:555132314787:web:6f9a2e1932bbaab2e7cb16"
 };
-const DAYS=['一','二','三','四','五'];
-const DKEYS=['mon','tue','wed','thu','fri'];
+const DAYS=['一','二','三','四','五','HPD'];
+const DKEYS=['mon','tue','wed','thu','fri','HPD'];
 const ICE=['去冰','微冰','少冰','正常冰'];
 const SUGAR=['無糖','1分糖','2分糖','微糖','半糖','少糖','全糖'];
 
 let db=null,shops={},sched={mon:null,tue:null,wed:null,thu:null,fri:null};
 let depts=[],orders={mon:{},tue:{},wed:{},thu:{},fri:{}},locked={mon:{},tue:{},wed:{},thu:{},fri:{}};
-let deadlines={mon:'',tue:'',wed:'',thu:'',fri:''};
+let _deadline=''; // 單一截止時間，套用全週
 let dayIdx=Math.min(Math.max(new Date().getDay()-1,0),4);
 let curMem=null,curCat='全部',isAdmin=false,editRid=null,importRid=null;
 let rSeq=100,iSeq=1000,dPush=false;
@@ -373,7 +373,7 @@ function initFB(){
       rAll();if(isAdmin)rAdmin();
     });
     db.ref('drink_locked').on('value',snap=>{const v=snap.val();if(v)DKEYS.forEach(k=>{if(v[k])locked[k]=v[k];});rAll();});
-    db.ref('drink_deadlines').on('value',snap=>{const v=snap.val();if(v)Object.assign(deadlines,v);rAll();startDlTimer();});
+    db.ref('drink_deadline').on('value',snap=>{_deadline=snap.val()||'';rAll();startDlTimer();});
     db.ref('.info/connected').on('value',snap=>{ss(snap.val()?'ok':'off');rAll();});
   }catch(e){console.error(e);ss('off');document.getElementById('banner').className='warn';document.getElementById('bannerTxt').textContent='⚠️ Firebase 連線失敗';rAll();}
 }
@@ -390,12 +390,12 @@ function pushD(){
   rAll();if(isAdmin)rAdmin();
 }
 
-function pushDl(){if(db)db.ref('drink_deadlines').set(deadlines);}
+function pushDl(){if(db)db.ref('drink_deadline').set(_deadline);}
 
 /* ── 截止時間 ── */
-function getDl(){return deadlines[dk()]||'';}
+function getDl(){return _deadline||'';}
 function isDlClosed(){
-  const dl=DKEYS.map(d=>deadlines[d]||'').find(v=>v)||'';
+  const dl=_deadline||'';
   if(!dl)return false;
   const now=new Date();
   const dow=now.getDay();
@@ -978,19 +978,19 @@ function adminLogout(){isAdmin=false;sessionStorage.removeItem('dAdmin');documen
 function setAllDl(){
   const dt=document.getElementById('inp-dl-dt').value;
   if(!dt){toast('請選擇日期時間');return;}
-  DKEYS.forEach(d=>{deadlines[d]=dt;});
+  _deadline=dt;
   pushDl();rAll();rAdminDl();
   toast('截止時間已設定：'+dlTxt(dt));
 }
 function clearAllDl(){
-  DKEYS.forEach(d=>{deadlines[d]='';});
+  _deadline='';
   pushDl();rAll();rAdminDl();
   toast('已清除截止時間');
 }
 function rAdminDl(){
   const el=document.getElementById('dlStatus');
   if(!el)return;
-  const anyDl=DKEYS.map(d=>deadlines[d]||'').find(v=>v)||'';
+  const anyDl=_deadline||'';
   const closed=anyDl&&isDlClosed();
   if(!anyDl){el.innerHTML='<div style="font-size:13px;color:var(--hint);">尚未設定</div>';return;}
   const color=closed?'var(--r)':'var(--a)';
