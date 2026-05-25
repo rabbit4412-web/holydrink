@@ -176,7 +176,7 @@ button,input,select{font-family:inherit;}
 </style>
 </head>
 <body>
-<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.11 Firebase 即時同步</span></div>
+<div id="banner"><div class="dot" id="dot"></div><span id="bannerTxt">v3.12 Firebase 即時同步</span></div>
 <div class="hdr">
   <div class="hdr-top">
     <div style="display:flex;align-items:center;"><h1>🧋 飲料訂購</h1><span class="abadge" id="abadge" style="display:none">管理員</span></div>
@@ -345,8 +345,8 @@ const FB={
   messagingSenderId:"555132314787",
   appId:"1:555132314787:web:6f9a2e1932bbaab2e7cb16"
 };
-const DAYS=['一','二','三','四','五','HPD'];
-const DKEYS=['mon','tue','wed','thu','fri','HPD'];
+const DAYS=['一','二','三','四','五'];
+const DKEYS=['mon','tue','wed','thu','fri'];
 const ICE=['去冰','微冰','少冰','正常冰'];
 const SUGAR=['無糖','1分糖','2分糖','微糖','半糖','少糖','全糖'];
 
@@ -558,6 +558,12 @@ function rDrinks(){
     grid.innerHTML=`<div style="grid-column:1/-1;padding:20px;text-align:center;"><div style="font-size:36px;margin-bottom:8px;">✅</div><div style="font-size:15px;font-weight:700;color:var(--g);margin-bottom:4px;">${curMem.m} 的訂單已送出</div><div style="font-size:13px;color:var(--sub);margin-bottom:14px;">NT$${mTotal(curMem.d,curMem.m)}</div>${isAdmin?`<button class="bsm" style="color:var(--r);border-color:#F09595;" onclick="unlock('${curMem.d}','${curMem.m}');rDrinks();">管理員解鎖</button>`:''}</div>`;
     return;
   }
+  // 截止後非管理員顯示提示，管理員照常
+  if(isDlClosed()&&!isAdmin){
+    const dlText=dlTxt(getDl());
+    grid.innerHTML=`<div style="grid-column:1/-1;background:var(--rl);border:1px solid #F09595;border-radius:var(--rad);padding:14px;display:flex;align-items:center;gap:8px;"><span style="font-size:20px;">🔒</span><div><div style="font-size:14px;font-weight:700;color:var(--r);">點餐已截止（${dlText}）</div><div style="font-size:12px;color:#a33;margin-top:3px;">如需取消截止，請管理員清除</div></div></div>`;
+    return;
+  }
   const items=curCat==='全部'?r.items:r.items.filter(i=>i.cat===curCat);
   const o=getOrd(curMem.d,curMem.m);
   const rid=tRid(),ro2=orders[dk()]?.[rid]||{};
@@ -607,7 +613,7 @@ function rDrinks(){
 
 function openOM(id){
   if(!curMem){toast('請先選擇名字');return;}
-  if(isDlClosed()){toast('點餐已截止');return;}
+  if(isDlClosed()&&!isAdmin){toast('點餐已截止');return;}
   const r=tShop();
   const item=(r?.items||[]).find(i=>String(i.id)===String(id));
   if(!item){toast('找不到飲品');return;}
@@ -708,7 +714,10 @@ function adminCancelDrink(deptName, memName, itemKey){
 let _confirmMem=null;
 function doConfirm(){
   if(!curMem){toast('錯誤：未選名字');return;}
-  if(isDlClosed()){toast('點餐已截止，無法送出');return;}
+  if(isDlClosed()){
+    if(!isAdmin){toast('點餐已截止，無法送出');return;}
+    if(!confirm('[管理員] 點餐已截止，確定強制送出 '+curMem.m+' 的訂單？'))return;
+  }
   const o=getOrd(curMem.d,curMem.m);
   if(!Object.keys(o.items||{}).length){toast('請先選擇飲料');return;}
   const total=mTotal(curMem.d,curMem.m);
