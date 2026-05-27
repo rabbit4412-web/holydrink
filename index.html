@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>公司飲料訂購</title>
-<!-- v3.13 imgbb圖片上傳 -->
+<!-- v3.14 自訂糖度選項+新欄位順序 -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
@@ -209,7 +209,7 @@ button,input,select{font-family:inherit;}
     <div id="importLbl" style="font-size:12px;min-height:18px;margin-bottom:8px;"></div>
     <div class="uz" id="uz" onclick="document.getElementById('csvIn').click()" ondragover="dov(event)" ondrop="dod(event)" ondragleave="dol()">
       <div class="uz-ic">📄</div><div class="uz-t">點擊或拖曳 CSV 匯入菜單</div>
-      <div class="uz-s">格式：飲品名稱, M價格, 分類, 茶類選項, 冰熱選項, 加料, 甜度固定, 取餐時間, L價格</div>
+      <div class="uz-s">格式：飲品名稱, 分類, 茶類選項, 甜度選項, 冰熱選項, 加料, 取餐時間, M價格, L價格</div>
     </div>
     <input type="file" id="csvIn" accept=".csv,.txt" style="display:none" onchange="onCsv(event)">
     <div class="abox" id="csvBox"><div class="abox-t" id="csvTxt"></div></div>
@@ -504,7 +504,8 @@ function openOM(id){
   if(isDlClosed()&&!isAdmin){toast('點餐已截止');return;}
   const r=tShop();const item=(r?.items||[]).find(i=>String(i.id)===String(id));
   if(!item){toast('找不到飲品');return;}
-  PID=id;PSIZE=item.priceL?'M':'';PSUGAR=item.fixedSugar?'甜度固定':'半糖';PADDON='';
+  PID=id;PSIZE=item.priceL?'M':'';PADDON='';
+  if(item.fixedSugar){PSUGAR='甜度固定';}else{const opts=item.sugarOptions&&item.sugarOptions.length?item.sugarOptions:SUGAR;PSUGAR=opts[Math.floor(opts.length/2)]||'半糖';}
   PTEA=item.tea&&item.tea.length?item.tea[0]:'';
   PPICKUP=item.pickupOptions&&item.pickupOptions.length?item.pickupOptions[0]:'';
   if(item.hotOptions&&item.hotOptions.length){PICE=item.hotOptions.includes('去冰')?'去冰':item.hotOptions[0];}else{PICE='去冰';}
@@ -518,7 +519,7 @@ function renderOM(item){
   if(item.tea&&item.tea.length>0){h+=`<div class="osec"><div class="olbl">🍃 茶類</div><div class="obts">${item.tea.map(t=>`<button class="obt${PTEA===t?' on':''}" onclick="setPtea('${t}')">${t}</button>`).join('')}</div></div>`;}
   h+=`<div class="osec"><div class="olbl">🍬 糖度</div>`;
   if(item.fixedSugar){h+=`<div style="font-size:12px;color:var(--a);padding:4px 0;">甜度固定，無法更改</div>`;}
-  else{h+=`<div class="obts">${SUGAR.map(v=>`<button class="obt${PSUGAR===v?' on':''}" onclick="setPsugar('${v}')">${v}</button>`).join('')}</div>`;}
+  else{const sOpts=item.sugarOptions&&item.sugarOptions.length?item.sugarOptions:SUGAR;h+=`<div class="obts">${sOpts.map(v=>`<button class="obt${PSUGAR===v?' on':''}" onclick="setPsugar('${v}')">${v}</button>`).join('')}</div>`;}
   h+=`</div>`;
   if(item.hotOptions&&item.hotOptions.length>0){h+=`<div class="osec"><div class="olbl">🌡️ 溫度</div><div class="obts">${item.hotOptions.map(v=>`<button class="obt${PICE===v?' on':''}" onclick="setPice('${v}')">${v}</button>`).join('')}</div></div>`;}
   else{h+=`<div class="osec"><div class="olbl">🧊 冰塊</div><div class="obts">${ICE.map(v=>`<button class="obt${PICE===v?' on':''}" onclick="setPice('${v}')">${v}</button>`).join('')}</div></div>`;}
@@ -532,7 +533,7 @@ function closeOM(){document.getElementById('orderModal').classList.remove('on');
 function doAddDrink(){
   if(PID===null){toast('請重新選擇飲品');return;}if(!curMem){toast('請先選擇名字');closeOM();return;}
   const r=tShop();const item=(r?.items||[]).find(i=>String(i.id)===String(PID));if(!item){toast('找不到飲品');closeOM();return;}
-  const sugar=item.fixedSugar?'甜度固定':PSUGAR;const size=item.priceL?PSIZE:'';
+  const sugar=item.fixedSugar?'甜度固定':PSUGAR;const size=item.priceL?PSIZE:'';  
   const k=mk(PID,size,PTEA||'',PICE,sugar,PADDON,PPICKUP||'');const savedName=item.name;
   document.getElementById('orderModal').classList.remove('on');PID=null;
   mutOrd(curMem.d,curMem.m,o=>{if(!o.items)o.items={};o.items[k]=(o.items[k]||0)+1;});
@@ -716,10 +717,10 @@ function procCsv(file,box,txt){
     try{
       const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l&&!l.startsWith('#'));const newItems=[],errs=[];
       const sampleLines=lines.slice(0,8).filter(l=>l);const tabCount=sampleLines.reduce((s,l)=>(l.match(/\t/g)||[]).length+s,0);const commaCount=sampleLines.reduce((s,l)=>(l.match(/,/g)||[]).length+s,0);const isTab=tabCount>commaCount;const sep=isTab?'\t':',';
-      const FIELD_ALIASES={'飲品名稱':'name','品名':'name','M價格':'price','中杯':'price','價格':'price','L價格':'priceL','大杯':'priceL','分類':'cat','類別':'cat','茶類選項':'tea','茶類':'tea','冰熱選項':'hot','冰塊':'hot','溫熱':'hot','冰塊/溫熱':'hot','冰量':'hot','加料選項':'addon','加料':'addon','配料':'addon','甜度固定':'fixedSugar','固定甜度':'fixedSugar','取餐時間':'pickup','取餐':'pickup'};
-      let si=0,fieldIdx={name:0,price:1,priceL:8,cat:2,tea:3,hot:4,addon:5,fixedSugar:6,pickup:7};
+      const FIELD_ALIASES={'飲品名稱':'name','品名':'name','M價格':'price','中杯':'price','價格':'price','L價格':'priceL','大杯':'priceL','分類':'cat','類別':'cat','茶類選項':'tea','茶類':'tea','冰熱選項':'hot','冰塊':'hot','溫熱':'hot','冰塊/溫熱':'hot','冰量':'hot','加料選項':'addon','加料':'addon','配料':'addon','甜度固定':'fixedSugar','固定甜度':'fixedSugar','甜度選項':'sugar','糖度選項':'sugar','取餐時間':'pickup','取餐':'pickup'};
+      let si=0,fieldIdx={name:0,cat:1,tea:2,sugar:3,hot:4,addon:5,pickup:6,price:7,priceL:8};
       for(let hi=0;hi<Math.min(lines.length,5);hi++){const hp=lines[hi].split(sep).map(p=>p.trim());const hasName=hp.some(p=>p.includes('名稱')||p.includes('品名'));const hasPrice=hp.some(p=>p.includes('價格'));if(hasName&&hasPrice){si=hi+1;fieldIdx={};hp.forEach((col,ci)=>{Object.keys(FIELD_ALIASES).forEach(alias=>{if(col.includes(alias))fieldIdx[FIELD_ALIASES[alias]]=ci;});});if(fieldIdx.name===undefined)fieldIdx.name=0;if(fieldIdx.price===undefined)fieldIdx.price=1;break;}}
-      lines.slice(si).forEach((line,idx)=>{if(!line)return;const parts=line.split(sep).map(p=>p.trim());if(parts.length<2){errs.push('第'+(si+idx+1)+'行格式錯誤');return;}const g=(fi)=>fi!==undefined&&fi<parts.length?parts[fi]:'';let name=g(fieldIdx.name),price=0,cat='飲品',teaStr='',hotStr='',addonStr='',fixedStr='',pickupStr='',priceLStr='';if(!name)return;price=Math.round(Number(g(fieldIdx.price).replace(/[^0-9.]/g,'')));cat=g(fieldIdx.cat)||'飲品';teaStr=g(fieldIdx.tea);hotStr=g(fieldIdx.hot);addonStr=g(fieldIdx.addon);fixedStr=g(fieldIdx.fixedSugar);pickupStr=g(fieldIdx.pickup);priceLStr=g(fieldIdx.priceL);if(!name)return;const pl=priceLStr?Math.round(Number(priceLStr.replace(/[^0-9.]/g,''))):0;const origPrice=price;if(!price||price<=0){if(pl>0){price=pl;priceLStr='';}else{if(name.startsWith('─')||name.startsWith('=')||name.startsWith('*'))return;errs.push('第'+(si+idx+1)+'行無有效價格：'+name);return;}}const item={id:iSeq++,name,price,cat};if(origPrice>0&&pl>0&&pl!==origPrice)item.priceL=pl;if(teaStr){const tArr=teaStr.split('|').map(t=>t.trim()).filter(Boolean);if(tArr.length)item.tea=tArr;}if(hotStr){const hArr=hotStr.split('|').map(h=>h.trim()).filter(Boolean);if(hArr.length)item.hotOptions=hArr;}if(addonStr){const arr=addonStr.split('|').map(a=>a.trim()).filter(Boolean);if(arr.length)item.addon=arr;}if(fixedStr&&(fixedStr.includes('固定')||fixedStr==='1'||fixedStr.toLowerCase()==='true'))item.fixedSugar=true;if(pickupStr){const pArr=pickupStr.split('|').map(p=>p.trim()).filter(Boolean);if(pArr.length)item.pickupOptions=pArr;}newItems.push(item);});
+      lines.slice(si).forEach((line,idx)=>{if(!line)return;const parts=line.split(sep).map(p=>p.trim());if(parts.length<2){errs.push('第'+(si+idx+1)+'行格式錯誤');return;}const g=(fi)=>fi!==undefined&&fi<parts.length?parts[fi]:'';let name=g(fieldIdx.name),price=0,cat='飲品',teaStr='',hotStr='',addonStr='',sugarStr='',pickupStr='',priceLStr='';if(!name)return;price=Math.round(Number(g(fieldIdx.price).replace(/[^0-9.]/g,'')));cat=g(fieldIdx.cat)||'飲品';teaStr=g(fieldIdx.tea);hotStr=g(fieldIdx.hot);addonStr=g(fieldIdx.addon);sugarStr=g(fieldIdx.sugar);pickupStr=g(fieldIdx.pickup);priceLStr=g(fieldIdx.priceL);if(!name)return;const pl=priceLStr?Math.round(Number(priceLStr.replace(/[^0-9.]/g,''))):0;const origPrice=price;if(!price||price<=0){if(pl>0){price=pl;priceLStr='';}else{if(name.startsWith('─')||name.startsWith('=')||name.startsWith('*'))return;errs.push('第'+(si+idx+1)+'行無有效價格：'+name);return;}}const item={id:iSeq++,name,price,cat};if(origPrice>0&&pl>0&&pl!==origPrice)item.priceL=pl;if(teaStr){const tArr=teaStr.split('|').map(t=>t.trim()).filter(Boolean);if(tArr.length)item.tea=tArr;}if(hotStr){const hArr=hotStr.split('|').map(h=>h.trim()).filter(Boolean);if(hArr.length)item.hotOptions=hArr;}if(addonStr){const arr=addonStr.split('|').map(a=>a.trim()).filter(Boolean);if(arr.length)item.addon=arr;}if(sugarStr){if(sugarStr==='固定'||sugarStr.includes('固定')){item.fixedSugar=true;}else{const sArr=sugarStr.split('|').map(s=>s.trim()).filter(Boolean);if(sArr.length)item.sugarOptions=sArr;}}if(pickupStr){const pArr=pickupStr.split('|').map(p=>p.trim()).filter(Boolean);if(pArr.length)item.pickupOptions=pArr;}newItems.push(item);});
       if(!newItems.length){box.className='abox show err';txt.textContent='❌ 沒有有效資料';setTimeout(()=>box.className='abox',4000);return;}
       if(!shops[rid].items)shops[rid].items=[];newItems.forEach(ni=>{const ex=shops[rid].items.findIndex(i=>i.name===ni.name);if(ex>=0)shops[rid].items[ex]=ni;else shops[rid].items.push(ni);});editRid=rid;pushS();rCat();rDrinks();rAdmin();
       box.className='abox ok show';txt.textContent='✅ 匯入 '+newItems.length+' 筆'+(errs.length?' ('+errs.length+'略過)':'');setTimeout(()=>box.className='abox',4000);
@@ -728,7 +729,7 @@ function procCsv(file,box,txt){
   function tryRead(encs){if(!encs.length){box.className='abox show err';txt.textContent='❌ 無法讀取';setTimeout(()=>box.className='abox',4000);return;}const r2=new FileReader();r2.onload=ev=>{let t=ev.target.result;if(t.charCodeAt(0)===0xFEFF)t=t.slice(1);const bad=(t.match(/\uFFFD/g)||[]).length,tot=t.replace(/\s/g,'').length;if(bad>0&&bad/tot>0.05&&encs.length>1){tryRead(encs.slice(1));return;}parse(t);};r2.onerror=()=>tryRead(encs.slice(1));r2.readAsText(file,encs[0]);}
   tryRead(['UTF-8','Big5','GBK']);
 }
-function dlTemplate(){const rows=['# 格式：飲品名稱,M價格,分類,茶類選項,冰熱選項,加料(名稱:加價|名稱:加價),甜度固定,取餐時間,L價格','厚哩青茶,30,沏茶,,,,,上班拿|下班拿,','古釀冬瓜茶,30,沏茶,,,,,上班拿|下班拿,','厚哩奶茶,50,醇奶,,,波霸:10|椰果:10|QQ:10,,上班拿|下班拿,','抹茶鮮奶,65,鮮奶,,,,,上班拿|下班拿,70'];const b=new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='飲料範本.csv';a.click();}
+function dlTemplate(){const rows=['# 格式：飲品名稱,分類,茶類選項,甜度選項,冰熱選項,加料(名稱:加價|名稱:加價),取餐時間,M價格,L價格','厚哩青茶,沏茶,,,,,上班拿|下班拿,30,','古釀冬瓜茶,沏茶,,,,,上班拿|下班拿,30,','厚哩奶茶,醇奶,,,,,上班拿|下班拿,50,','抹茶鮮奶,鮮奶,,固定,,,上班拿|下班拿,65,70','大人的可可,醇奶,,固定,正常|少冰|去冰|熱,,上班拿|下班拿,90,'];const b=new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='飲料範本.csv';a.click();}
 function delImg(rid,idx){shops[rid].images.splice(idx,1);pushS();rAdmin();rShop();}
 function openImg(url){document.getElementById('imgSrc').src=url;document.getElementById('imgModal').classList.add('on');}
 function closeImg(){document.getElementById('imgModal').classList.remove('on');document.getElementById('imgSrc').src='';}
